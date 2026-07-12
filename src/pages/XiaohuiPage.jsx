@@ -517,7 +517,7 @@ function XiaohuiPage() {
             className="w-9 h-9 rounded-full flex-shrink-0 cursor-pointer overflow-hidden"
           >
             <img
-              src="/icons/xiaohui-avatar.png"
+              src={import.meta.env.BASE_URL + "icons/xiaohui-avatar.png"}
               alt="小慧"
               draggable={false}
               style={{ width: '100%', height: '100%' }}
@@ -638,7 +638,7 @@ function XiaohuiPage() {
                         className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0"
                       >
                         <img
-                          src="/icons/xiaohui-avatar.png"
+                          src={import.meta.env.BASE_URL + "icons/xiaohui-avatar.png"}
                           alt="小慧"
                           draggable={false}
                           style={{ width: '100%', height: '100%' }}
@@ -715,7 +715,7 @@ function XiaohuiPage() {
                 className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden"
               >
                 <img
-                  src="/icons/xiaohui-avatar.png"
+                  src={import.meta.env.BASE_URL + "icons/xiaohui-avatar.png"}
                   alt="小慧"
                   draggable={false}
                   style={{ width: '100%', height: '100%' }}
@@ -927,7 +927,7 @@ function XiaohuiPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src="/icons/xiaohui-avatar.png"
+              src={import.meta.env.BASE_URL + "icons/xiaohui-avatar.png"}
               alt="小慧头像"
               style={{ width: '100%', height: '100%', display: 'block' }}
             />

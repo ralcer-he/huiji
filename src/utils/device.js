@@ -1,5 +1,11 @@
+import { Capacitor } from '@capacitor/core'
+
 export function isMobileDevice() {
   if (typeof window === 'undefined') return false
+
+  if (Capacitor.isNativePlatform()) {
+    return true
+  }
 
   const ua = navigator.userAgent || navigator.vendor || window.opera || ''
 
@@ -26,4 +32,16 @@ export function isIOS() {
 
 export function isAndroid() {
   return /android/i.test(navigator.userAgent)
+}
+
+export function getAssetUrl(path) {
+  if (!path) return path
+  if (path.startsWith('http://') || path.startsWith('https://') || path.startsWith('data:')) {
+    return path
+  }
+  const base = import.meta.env.BASE_URL || '/'
+  if (path.startsWith('/')) {
+    return base + path.slice(1)
+  }
+  return base + path
 }
