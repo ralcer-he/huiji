@@ -1,7 +1,7 @@
 {
   "name": "huiji",
   "private": true,
-  "version": "1.06",
+  "version": "1.06.2",
   "type": "module",
   "scripts": {
     "dev": "vite",
@@ -54,7 +54,6 @@
     "eslint-plugin-react-hooks": "^4.6.0",
     "eslint-plugin-react-refresh": "^0.4.6",
     "fake-indexeddb": "^6.2.5",
-    "gh-pages": "^6.3.0",
     "playwright": "^1.61.1",
     "png-to-ico": "^3.0.2",
     "tailwindcss": "^4.3.2",

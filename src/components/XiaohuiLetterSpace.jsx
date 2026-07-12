@@ -3,14 +3,12 @@ import Icon from './ui/Icon'
 import {
   getLetters,
   markLetterRead,
-  deleteLetter,
 } from '../db/database'
 import {
   sendUserLetter,
   checkAndGenerateLetters,
   formatLetterDate,
   getUnreadLetterCount,
-  generateTestLetters,
 } from '../utils/letterService'
 
 const LETTER_BG = '#FFF8E7'
@@ -35,24 +33,7 @@ export default function XiaohuiLetterSpace({ onClose }) {
   }, [])
 
   useEffect(() => {
-    loadLetters().then(async () => {
-      const all = await getLetters({}, 100)
-      const hasOldFormat = all.some(l =>
-        (l.type === 'xiaohui_to_user' && l.content.includes('——小慧')) ||
-        (l.type === 'xiaohui_to_user' && l.content.startsWith('202'))
-      )
-      if (hasOldFormat) {
-        for (const l of all) {
-          await deleteLetter(l.id)
-        }
-        await loadLetters()
-      }
-      const remaining = await getLetters({}, 100)
-      if (remaining.length === 0) {
-        await generateTestLetters()
-        await loadLetters()
-      }
-    })
+    loadLetters()
     checkAndGenerateLetters().then((generated) => {
       if (generated.length > 0) loadLetters()
     })

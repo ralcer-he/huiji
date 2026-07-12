@@ -4,7 +4,6 @@ import tailwindcss from '@tailwindcss/vite'
 import { VitePWA } from 'vite-plugin-pwa'
 
 export default defineConfig({
-  base: '/huiji/',
   plugins: [
     react(),
     tailwindcss(),
@@ -14,12 +13,12 @@ export default defineConfig({
         name: '慧记',
         short_name: '慧记',
         description: 'AI情绪感知日记',
-        start_url: '/huiji/',
+        start_url: '/',
         display: 'standalone',
         background_color: '#F8F6F3',
         theme_color: '#C4A882',
         icons: [
-          { src: '/huiji/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
+          { src: '/icons/icon-512.png', sizes: '512x512', type: 'image/png' },
         ],
       },
       workbox: {

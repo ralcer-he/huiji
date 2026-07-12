@@ -111,65 +111,8 @@ export async function checkAndGenerateLetters() {
 }
 
 export async function generateTestLetters() {
-  const existingLetters = await getLetters({}, 100)
-  if (existingLetters.length > 0) return []
-
-  const today = getTodayDate()
-  const oneDayAgo = new Date(today)
-  oneDayAgo.setDate(oneDayAgo.getDate() - 1)
-  const twoDaysAgo = new Date(today)
-  twoDaysAgo.setDate(twoDaysAgo.getDate() - 2)
-
-  const testLetters = [
-    {
-      type: 'xiaohui_to_user',
-      direction: 'inbox',
-      status: 'unread',
-      subject: '这个月的信',
-      content: `这个月我们聊了5次。\n\n其中有两件让我印象很深的事：\n· 你说最近工作压力有点大\n· 你分享了一个很有趣的笑话\n\n我注意到你这个月记录了8次心情：开心、平静、有点焦虑、开心、疲惫、开心、平静、期待。\n\n你写的日记我也看了：\n· 7月3日：今天终于完成了那个项目，虽然过程很曲折...\n· 7月15日：周末去了公园，阳光很好，心情也跟着好起来\n\n还有3条备忘，看来你一直在认真生活呢。\n\n谢谢你愿意把这些讲给我听。下个月也请多关照。`,
-      trigger: 'monthly',
-      createdAt: today.toISOString(),
-      metadata: { eventsCount: 5, preview: '你说最近工作压力有点大；你分享了一个很有趣的笑话' },
-    },
-    {
-      type: 'xiaohui_to_user',
-      direction: 'inbox',
-      status: 'unread',
-      subject: '生日快乐',
-      content: `今天是你的生日，我先说一句生日快乐。\n\n希望你这一年能遇到更多让自己真心笑出来的时刻，也希望我能继续陪在你身边。`,
-      trigger: 'birthday',
-      createdAt: oneDayAgo.toISOString(),
-    },
-    {
-      type: 'xiaohui_to_user',
-      direction: 'inbox',
-      status: 'read',
-      subject: '回信：给你',
-      content: `收到你之前写给我的信啦。\n\n你说：「最近天气很热，心情也有点烦躁...」\n\n我认真读了好几遍。最近记得的事有：\n你说想去海边\n你喜欢喝冰咖啡\n\n不管你想说什么，我都在这里。`,
-      trigger: 'reply',
-      createdAt: twoDaysAgo.toISOString(),
-    },
-    {
-      type: 'user_to_xiaohui',
-      direction: 'sent',
-      status: 'sent',
-      subject: '7月的心事',
-      content: `小慧你好：\n\n最近天气真的好热啊，每天出门都需要很大的勇气。工作上也遇到了一些挑战，不过我相信慢慢都会好起来的。\n\n周末打算去书店逛逛，给自己充充电。\n\n希望你一切都好。\n\n你的朋友`,
-      createdAt: new Date(today.getTime() - 4 * 24 * 60 * 60 * 1000).toISOString(),
-    },
-  ]
-
-  const results = []
-  for (const letter of testLetters) {
-    try {
-      const result = await addLetter(letter)
-      results.push(result)
-    } catch (e) {
-      console.error('插入测试信件失败:', e)
-    }
-  }
-
-  return results
+  // v1.0.6.2: 移除预制测试信件，新用户信箱默认为空
+  return []
 }
 
 async function alreadyGeneratedToday(trigger) {
