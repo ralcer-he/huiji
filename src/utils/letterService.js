@@ -115,6 +115,23 @@ export async function generateTestLetters() {
   return []
 }
 
+export async function cleanupTestLetters() {
+  const cleaned = localStorage.getItem('lettersCleaned_v1062')
+  if (cleaned) return
+
+  try {
+    const allLetters = await getLetters({ type: 'xiaohui_to_user' }, 200)
+    const testLetters = allLetters.filter(l => !l.trigger)
+    for (const letter of testLetters) {
+      await db.letters.delete(letter.id)
+    }
+
+    localStorage.setItem('lettersCleaned_v1062', '1')
+  } catch (e) {
+    console.error('清理测试数据失败:', e)
+  }
+}
+
 async function alreadyGeneratedToday(trigger) {
   const todayStr = new Date().toLocaleDateString('sv-SE') // "YYYY-MM-DD" 格式，本地时区
   const letters = await getLetters({ type: 'xiaohui_to_user' }, 100)
