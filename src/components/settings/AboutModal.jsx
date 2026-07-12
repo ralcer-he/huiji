@@ -100,7 +100,7 @@ export default function AboutModal({ onClose }) {
           <div className="pb-2">
             <div className="flex justify-center mb-3">
               <div className="w-16 h-16 rounded-2xl overflow-hidden shadow-md flex items-center justify-center" style={{ backgroundColor: '#fff' }}>
-                <img src="/icons/icon-512.png" alt="慧记" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
+                <img src={`${import.meta.env.BASE_URL}icons/icon-512.png`} alt="慧记" style={{ width: '100%', height: '100%', objectFit: 'contain' }} />
               </div>
             </div>
             <h3 className="text-[18px] font-bold text-center" style={{ color: 'var(--ink)' }}>慧记</h3>

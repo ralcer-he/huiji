@@ -444,7 +444,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
           <div
             className="w-8 h-8 rounded-full flex-shrink-0 overflow-hidden"
           >
-            <img src="/icons/xiaohui-fab.svg" alt="助手" style={{ width: '100%', height: '100%' }} />
+            <img src={`${import.meta.env.BASE_URL}icons/xiaohui-fab.svg`} alt="助手" style={{ width: '100%', height: '100%' }} />
           </div>
           <div className="flex flex-col">
             <h3 className="font-semibold text-[14px]" style={{ color: 'var(--ink)' }}>助手</h3>
@@ -554,7 +554,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
               <div
                 className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden"
               >
-                <img src="/icons/xiaohui-fab.svg" alt="助手" style={{ width: '100%', height: '100%' }} />
+                <img src={`${import.meta.env.BASE_URL}icons/xiaohui-fab.svg`} alt="助手" style={{ width: '100%', height: '100%' }} />
               </div>
               <div className="flex flex-col" style={{ maxWidth: '75%' }}>
                 <div
@@ -618,7 +618,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
                   <div
                     className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden"
                   >
-                    <img src="/icons/xiaohui-fab.svg" alt="助手" style={{ width: '100%', height: '100%' }} />
+                    <img src={`${import.meta.env.BASE_URL}icons/xiaohui-fab.svg`} alt="助手" style={{ width: '100%', height: '100%' }} />
                   </div>
                 )}
                 {msg.isUser && (
@@ -696,7 +696,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
             <div
               className="w-9 h-9 rounded-full flex-shrink-0 overflow-hidden"
             >
-              <img src="/icons/xiaohui-fab.svg" alt="助手" style={{ width: '100%', height: '100%' }} />
+              <img src={`${import.meta.env.BASE_URL}icons/xiaohui-fab.svg`} alt="助手" style={{ width: '100%', height: '100%' }} />
             </div>
             <div className="flex flex-col gap-1 ml-2.5">
               <div
@@ -918,7 +918,7 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
       }}
     >
       <img
-        src="/icons/xiaohui-fab.svg"
+        src={`${import.meta.env.BASE_URL}icons/xiaohui-fab.svg`}
         alt="小慧"
         draggable={false}
         style={{ width: '90px', height: '90px', pointerEvents: 'none' }}
