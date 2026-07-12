@@ -9,6 +9,7 @@ import { getRecordType } from '../../constants/types'
 import { calculateStreak, stripHtml } from '../../utils/recordHelpers'
 import { getAllRecords, getSetting } from '../../db/database'
 import { isMobileDevice } from '../../utils/device'
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight'
 
 const WEATHER_OPTIONS = [
   { name: '晴', iconName: 'weather-sun' },
@@ -55,8 +56,9 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
   const [showLocationPicker, setShowLocationPicker] = useState(false)
   const [showDatePicker, setShowDatePicker] = useState(false)
   const [dayCount, setDayCount] = useState(1)
-  const [isMobile, setIsMobile] = useState(false)
+  const [isMobile, setIsMobile] = useState(() => isMobileDevice() || window.innerWidth < 768)
   const [toolbarConfig, setToolbarConfig] = useState(['bold', 'italic', 'underline', 'strike', 'h1', 'h2', 'bulletList', 'orderedList', 'indent', 'outdent', 'image', 'speech', 'drawing', 'time', 'datetime', 'date'])
+  const { isKeyboardVisible, keyboardHeight } = useKeyboardHeight()
 
   const loadToolbarConfig = async () => {
     const config = await getSetting('diaryToolbar')
@@ -75,7 +77,7 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
   }, [])
 
   useEffect(() => {
-    const checkMobile = () => setIsMobile(window.innerWidth < 768)
+    const checkMobile = () => setIsMobile(isMobileDevice() || window.innerWidth < 768)
     checkMobile()
     window.addEventListener('resize', checkMobile)
     return () => window.removeEventListener('resize', checkMobile)
@@ -619,7 +621,7 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
         </div>
 
         {/* 编辑器卡片 */}
-        <div className="huiji-card relative overflow-hidden">
+        <div className="huiji-card relative overflow-hidden" style={isKeyboardVisible ? { paddingBottom: '50px' } : {}}>
           {/* 天气地点栏 */}
           {type === 'diary' && (
             <div className="px-4 pt-3 pb-2 border-b" style={{ borderColor: 'var(--rule)' }}>
@@ -737,15 +739,17 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
             />
           </div>
 
-          {/* 工具栏 */}
-          <div
-            className="flex items-center gap-0.5 px-2 h-10 border-b overflow-x-auto editor-toolbar-sticky"
-            style={{ borderColor: 'var(--rule)' }}
-          >
-            {renderToolbarButtons()?.left}
-            <div className="flex-1" />
-            {renderToolbarButtons()?.right}
-          </div>
+          {/* 工具栏 - 键盘未弹出时显示在顶部 */}
+          {!isKeyboardVisible && (
+            <div
+              className="flex items-center gap-0.5 px-2 h-10 border-b overflow-x-auto"
+              style={{ borderColor: 'var(--rule)' }}
+            >
+              {renderToolbarButtons()?.left}
+              <div className="flex-1" />
+              {renderToolbarButtons()?.right}
+            </div>
+          )}
 
           {/* 编辑器内容区 */}
           <div className="relative z-10 px-4 py-4 min-h-[200px]">
@@ -971,6 +975,21 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
             </button>
           </div>
         </div>
+
+        {/* 移动端键盘弹出时的底部工具栏 */}
+        {isKeyboardVisible && (
+          <div
+            className="fixed left-0 right-0 bottom-0 z-40 flex items-center gap-0.5 px-2 h-10 border-t overflow-x-auto"
+            style={{
+              backgroundColor: 'var(--bg)',
+              borderColor: 'var(--rule)',
+            }}
+          >
+          {renderToolbarButtons()?.left}
+          <div className="flex-1" />
+          {renderToolbarButtons()?.right}
+        </div>
+        )}
       </div>
     )}
 

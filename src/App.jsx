@@ -18,6 +18,7 @@ import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { Keyboard } from '@capacitor/keyboard'
+import XiaohuiFab from './components/XiaohuiFab'
 
 function DesktopContent() {
   const location = useLocation()
@@ -497,6 +498,7 @@ function App() {
       </div>
 
       <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+      <XiaohuiFab />
     </div>
   )
 }

@@ -13,7 +13,7 @@ import Toggle from '../ui/Toggle'
 import Collapsible from '../ui/Collapsible'
 import Icon from '../ui/Icon'
 
-function ReminderSettingsPanel({ lastBackupDate, onLastBackupDateChange, onBackupNow }) {
+function ReminderSettingsPanel({ lastBackupDate, onLastBackupDateChange, onBackupNow, backingUp }) {
   const [reminderEnabled, setReminderEnabled] = useState(false)
   const [reminderTime, setReminderTime] = useState('21:00')
   const [reminderMessage, setReminderMessage] = useState('今天记录了吗？来慧记写点什么')
@@ -201,10 +201,11 @@ function ReminderSettingsPanel({ lastBackupDate, onLastBackupDateChange, onBacku
 
           <button
             onClick={handleBackupNow}
-            className="w-full py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98]"
+            disabled={backingUp}
+            className="w-full py-3 rounded-xl text-sm font-medium transition-all duration-200 hover:scale-[1.02] active:scale-[0.98] disabled:opacity-50 disabled:cursor-not-allowed"
             style={{ backgroundColor: 'var(--accent)', color: 'white' }}
           >
-            立即备份数据
+            {backingUp ? '备份中...' : '立即备份数据'}
           </button>
         </div>
       </Collapsible>

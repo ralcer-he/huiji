@@ -21,6 +21,12 @@ input, textarea, [contenteditable] {
   -webkit-touch-callout: default;
 }
 
+.chat-message {
+  -webkit-user-select: text;
+  user-select: text;
+  -webkit-touch-callout: default;
+}
+
 @media (max-width: 768px) {
   .ProseMirror {
     -webkit-touch-callout: default;

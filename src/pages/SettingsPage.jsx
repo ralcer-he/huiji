@@ -9,11 +9,31 @@ import ReminderSettingsPanel from '../components/settings/ReminderSettingsPanel'
 import ToolbarSettings from '../components/settings/ToolbarSettings'
 import DataManagementModal from '../components/settings/DataManagementModal'
 import AboutModal from '../components/settings/AboutModal'
+import { exportAllData } from '../db/database'
+import { recordBackupDate } from '../utils/reminder'
+import { saveOrShareFile } from '../utils/fileHelper'
 
 function SettingsPage() {
   const [showDataModal, setShowDataModal] = useState(false)
   const [showAboutModal, setShowAboutModal] = useState(false)
   const [lastBackupDate, setLastBackupDate] = useState(null)
+  const [backingUp, setBackingUp] = useState(false)
+
+  const handleBackupNow = async () => {
+    if (backingUp) return
+    setBackingUp(true)
+    try {
+      const data = await exportAllData()
+      const json = JSON.stringify(data, null, 2)
+      await saveOrShareFile(json, `慧记数据_${new Date().toISOString().split('T')[0]}.json`, 'application/json', { title: '备份慧记数据' })
+      await recordBackupDate()
+      setLastBackupDate(new Date().toISOString())
+    } catch (err) {
+      console.error('备份失败:', err)
+      alert('备份失败，请重试')
+    }
+    setBackingUp(false)
+  }
 
   const settingItems = [
     { iconName: 'save', label: '数据管理', desc: '导出/导入/清空', onClick: () => setShowDataModal(true) },
@@ -69,7 +89,8 @@ function SettingsPage() {
         <ReminderSettingsPanel
           lastBackupDate={lastBackupDate}
           onLastBackupDateChange={setLastBackupDate}
-          onBackupNow={() => setShowDataModal(true)}
+          onBackupNow={handleBackupNow}
+          backingUp={backingUp}
         />
 
         <div className="border-t my-6" style={{ borderColor: 'var(--rule)' }} />

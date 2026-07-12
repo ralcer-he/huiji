@@ -1,6 +1,6 @@
 import { useState, useRef } from 'react'
 import { createPortal } from 'react-dom'
-import { getAllRecords, exportAllData, importData, clearAllData, importRecords } from '../../db/database'
+import { getAllRecords, exportAllData, importData, importRecords, db, clearAllData } from '../../db/database'
 import { exportToPDF, exportToHTML } from '../../utils/pdfExport'
 import { EMOTIONS } from '../../constants/emotions'
 import { recordBackupDate } from '../../utils/reminder'
@@ -156,7 +156,7 @@ function DataManagementModal({ onClose, onRefresh, onBackupComplete }) {
           e.target.value = ''
           return
         }
-        await importData({ records: result.records, settings: result.settings })
+        await importData(result)
         onRefresh()
         onClose()
         setImporting(false)
@@ -227,12 +227,25 @@ function DataManagementModal({ onClose, onRefresh, onBackupComplete }) {
     setClearing(true)
     try {
       await clearAllData()
-      onRefresh()
-      onClose()
+      await new Promise(resolve => setTimeout(resolve, 300))
+      try {
+        const dbName = db.name
+        db.close()
+        const req = indexedDB.deleteDatabase(dbName)
+        await new Promise((resolve, reject) => {
+          req.onsuccess = resolve
+          req.onerror = reject
+          req.onblocked = resolve
+        })
+        await new Promise(resolve => setTimeout(resolve, 300))
+      } catch (e) {
+        console.error('删除数据库失败:', e)
+      }
     } catch (err) {
       console.error('清空失败:', err)
     }
-    setClearing(false)
+    alert('数据已清空，即将刷新页面...')
+    window.location.reload()
   }
 
   const handleAIEnhance = async () => {

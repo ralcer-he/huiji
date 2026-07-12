@@ -85,6 +85,9 @@ export function detectFormat(fileName, content) {
       if (data.records && Array.isArray(data.records) && data.settings) {
         return 'huiji'
       }
+      if (data.chatConversations || data.letters || data.userProfile) {
+        return 'huiji'
+      }
       return 'generic-json'
     } catch {
       return 'unknown'
@@ -125,7 +128,14 @@ export function parseHuijiJson(jsonStr) {
     return {
       records: data.records,
       settings: data.settings || [],
+      chatConversations: data.chatConversations || [],
+      chatMessages: data.chatMessages || [],
+      userProfile: data.userProfile || [],
+      memoryEvents: data.memoryEvents || [],
+      xiaohuiDiary: data.xiaohuiDiary || [],
+      letters: data.letters || [],
       isHuijiFormat: true,
+      version: data.version || 1,
     }
   } catch (e) {
     return { records: [], settings: [], error: 'JSON 解析失败：' + e.message }
@@ -432,7 +442,14 @@ export async function parseImportFile(file) {
       format: 'huiji',
       records: result.records,
       settings: result.settings,
+      chatConversations: result.chatConversations,
+      chatMessages: result.chatMessages,
+      userProfile: result.userProfile,
+      memoryEvents: result.memoryEvents,
+      xiaohuiDiary: result.xiaohuiDiary,
+      letters: result.letters,
       isHuijiFormat: true,
+      version: result.version,
       error: result.error,
     }
   }

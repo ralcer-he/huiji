@@ -8,6 +8,7 @@ import { isSpeechSupported } from '../../utils/speech'
 import { getSetting, saveSetting } from '../../db/database'
 import { DEFAULT_NOTE_TOOLBAR } from '../../constants/defaults'
 import { isMobileDevice } from '../../utils/device'
+import { useKeyboardHeight } from '../../hooks/useKeyboardHeight'
 
 const NOTE_TOOLBAR_VERSION = 2
 
@@ -35,11 +36,12 @@ function NoteEditor({ customDate, setCustomDate, editRecord, onSaved }) {
   const [showCustomTagInput, setShowCustomTagInput] = useState(false)
   const [customTagText, setCustomTagText] = useState('')
   const [showDatePicker, setShowDatePicker] = useState(false)
-  const [isMobile, setIsMobile] = useState(() => window.innerWidth < 768)
+  const [isMobile, setIsMobile] = useState(() => isMobileDevice() || window.innerWidth < 768)
   const [toolbarConfig, setToolbarConfig] = useState(DEFAULT_NOTE_TOOLBAR)
+  const { isKeyboardVisible, keyboardHeight } = useKeyboardHeight()
 
   useEffect(() => {
-    const check = () => setIsMobile(window.innerWidth < 768)
+    const check = () => setIsMobile(isMobileDevice() || window.innerWidth < 768)
     check()
     window.addEventListener('resize', check)
     return () => window.removeEventListener('resize', check)
@@ -223,17 +225,19 @@ function NoteEditor({ customDate, setCustomDate, editRecord, onSaved }) {
         />
       </div>
 
-      <div className="huiji-card relative overflow-hidden">
-        <div
-          className="flex items-center gap-0.5 px-2 h-10 border-b overflow-x-auto editor-toolbar-sticky"
-          style={{ borderColor: 'var(--rule)' }}
-        >
-          {renderToolbarButtons()?.left}
-          <div className="flex-1" />
-          {renderToolbarButtons()?.right}
-        </div>
+      <div className="huiji-card relative overflow-hidden" style={isMobile && isKeyboardVisible ? { paddingBottom: '50px' } : {}}>
+        {(!isMobile || !isKeyboardVisible) && (
+          <div
+            className="flex items-center gap-0.5 px-2 h-10 border-b overflow-x-auto"
+            style={{ borderColor: 'var(--rule)' }}
+          >
+            {renderToolbarButtons()?.left}
+            <div className="flex-1" />
+            {renderToolbarButtons()?.right}
+          </div>
+        )}
 
-        <div className="relative z-10 p-7">
+        <div className="relative z-10 p-4 md:p-7">
           <EditorContent editor={editor} />
         </div>
 
@@ -392,6 +396,21 @@ function NoteEditor({ customDate, setCustomDate, editRecord, onSaved }) {
           </button>
         </div>
       </div>
+
+      {/* 移动端键盘弹出时的底部工具栏 */}
+      {isMobile && isKeyboardVisible && (
+        <div
+          className="fixed left-0 right-0 bottom-0 z-40 flex items-center gap-0.5 px-2 h-10 border-t overflow-x-auto"
+          style={{
+            backgroundColor: 'var(--bg)',
+            borderColor: 'var(--rule)',
+          }}
+        >
+          {renderToolbarButtons()?.left}
+          <div className="flex-1" />
+          {renderToolbarButtons()?.right}
+        </div>
+      )}
 
       <input ref={fileInputRef} type="file" accept="image/*" onChange={handleImageUpload} className="hidden" />
 
