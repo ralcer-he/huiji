@@ -142,11 +142,23 @@ export const getRecordsByDateRange = async (startDate, endDate) => {
 export const exportAllData = async () => {
   const records = await db.records.toArray();
   const settings = await db.settings.toArray();
+  const chatConversations = await db.chatConversations.toArray();
+  const chatMessages = await db.chatMessages.toArray();
+  const userProfile = await db.userProfile.toArray();
+  const memoryEvents = await db.memoryEvents.toArray();
+  const xiaohuiDiary = await db.xiaohuiDiary.toArray();
+  const letters = await db.letters.toArray();
   return {
     records,
     settings,
+    chatConversations,
+    chatMessages,
+    userProfile,
+    memoryEvents,
+    xiaohuiDiary,
+    letters,
     exportedAt: new Date().toISOString(),
-    version: 1,
+    version: 2,
   };
 };
 
@@ -155,15 +167,23 @@ export const importData = async (data) => {
     throw new Error('无效的导入数据格式');
   }
 
-  await db.transaction('rw', db.records, db.settings, async () => {
-    if (data.records && Array.isArray(data.records)) {
-      for (const record of data.records) {
-        await db.records.put(record);
-      }
-    }
-    if (data.settings && Array.isArray(data.settings)) {
-      for (const setting of data.settings) {
-        await db.settings.put(setting);
+  const tables = [
+    { key: 'records', table: db.records },
+    { key: 'settings', table: db.settings },
+    { key: 'chatConversations', table: db.chatConversations },
+    { key: 'chatMessages', table: db.chatMessages },
+    { key: 'userProfile', table: db.userProfile },
+    { key: 'memoryEvents', table: db.memoryEvents },
+    { key: 'xiaohuiDiary', table: db.xiaohuiDiary },
+    { key: 'letters', table: db.letters },
+  ];
+
+  await db.transaction('rw', tables.map(t => t.table), async () => {
+    for (const { key, table } of tables) {
+      if (data[key] && Array.isArray(data[key])) {
+        for (const item of data[key]) {
+          await table.put(item);
+        }
       }
     }
   });
@@ -235,10 +255,97 @@ export const importRecords = async (records, options = {}) => {
 };
 
 export const clearAllData = async () => {
-  await db.transaction('rw', db.records, db.settings, async () => {
-    await db.records.clear();
-    await db.settings.clear();
-  });
+  const tableNames = [
+    'records',
+    'settings',
+    'chatConversations',
+    'chatMessages',
+    'userProfile',
+    'memoryEvents',
+    'xiaohuiDiary',
+    'letters',
+  ];
+
+  try {
+    await db.transaction('rw', tableNames.map(name => db[name]), async () => {
+      for (const name of tableNames) {
+        try {
+          await db[name].clear();
+        } catch (e) {
+          console.error(`清空 ${name} 失败:`, e);
+        }
+      }
+    });
+  } catch (e) {
+    console.error('事务清空失败，逐表回退:', e);
+    for (const name of tableNames) {
+      try {
+        await db[name].clear();
+      } catch (e2) {
+        console.error(`清空 ${name} 也失败:`, e2);
+      }
+    }
+  }
+
+  try {
+    localStorage.clear();
+  } catch (e) { console.error('清空 localStorage 失败:', e); }
+
+  try {
+    if (typeof sessionStorage !== 'undefined') {
+      sessionStorage.clear();
+    }
+  } catch (e) { console.error('清空 sessionStorage 失败:', e); }
+};
+
+export const cleanupLegacyData = async () => {
+  try {
+    const CLEAN_VERSION = 'legacyDataCleaned_v1064';
+    const cleanedMarker = await getSetting(CLEAN_VERSION);
+    if (!cleanedMarker) {
+      const allConversations = await db.chatConversations.toArray();
+      const validModes = ['chat'];
+
+      const legacyConvs = allConversations.filter(c => !validModes.includes(c.mode));
+      if (legacyConvs.length > 0) {
+        console.log(`清理 ${legacyConvs.length} 个旧版本对话`);
+        for (const conv of legacyConvs) {
+          await db.chatMessages.where('conversationId').equals(conv.id).delete();
+          await db.chatConversations.delete(conv.id);
+        }
+      }
+
+      const remaining = await db.chatConversations.toArray();
+      const chatConvs = remaining
+        .filter(c => c.mode === 'chat')
+        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+
+      if (chatConvs.length > 1) {
+        const chatConvDetails = [];
+        for (const conv of chatConvs) {
+          const msgs = await db.chatMessages.where('conversationId').equals(conv.id).toArray();
+          const userMsgCount = msgs.filter(m => m.role === 'user').length;
+          chatConvDetails.push({ conv, userMsgCount, totalMsgCount: msgs.length });
+        }
+
+        const withUserMsgs = chatConvDetails.filter(c => c.userMsgCount > 0);
+        const toKeep = withUserMsgs.length > 0
+          ? withUserMsgs[0].conv.id
+          : chatConvDetails[0].conv.id;
+
+        const toDelete = chatConvDetails.filter(c => c.conv.id !== toKeep);
+        console.log(`清理 ${toDelete.length} 个多余对话，保留 ${toKeep}`);
+        for (const item of toDelete) {
+          await db.chatMessages.where('conversationId').equals(item.conv.id).delete();
+          await db.chatConversations.delete(item.conv.id);
+        }
+      }
+
+      await saveSetting(CLEAN_VERSION, '1');
+    }
+  } catch (e) {
+    console.error('清理旧数据失败:', e);
+  }
 };
 
 export const getSetting = async (key) => {
@@ -265,19 +372,60 @@ export const saveDailyMemos = async (memos) => {
 
 // ========== 对话历史相关 ==========
 
+let _createConvLock = null;
+
 export const createChatConversation = async (mode = 'assistant', title = '') => {
-  const now = new Date().toISOString();
-  const id = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-  const conversation = {
-    id,
-    mode,
-    title: title || '新对话',
-    createdAt: now,
-    updatedAt: now,
-    messageCount: 0,
-  };
-  await db.chatConversations.put(conversation);
-  return conversation;
+  if (_createConvLock) {
+    const existing = await _createConvLock;
+    if (existing && existing.mode === mode && !title) {
+      return existing;
+    }
+  }
+  
+  let resolveLock;
+  _createConvLock = new Promise(resolve => { resolveLock = resolve; });
+  
+  try {
+    const existing = await db.chatConversations
+      .where('mode').equals(mode)
+      .reverse()
+      .sortBy('updatedAt');
+    
+    if (existing && existing.length > 0 && !title) {
+      resolveLock(existing[0]);
+      return existing[0];
+    }
+    
+    const now = new Date().toISOString();
+    const id = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+    const conversation = {
+      id,
+      mode,
+      title: title || '新对话',
+      createdAt: now,
+      updatedAt: now,
+      messageCount: 0,
+    };
+    await db.chatConversations.put(conversation);
+    resolveLock(conversation);
+    return conversation;
+  } catch (e) {
+    resolveLock(null);
+    throw e;
+  }
+};
+
+export const getOrCreateChatConversation = async (mode = 'chat') => {
+  const existing = await db.chatConversations
+    .where('mode').equals(mode)
+    .reverse()
+    .sortBy('updatedAt');
+  
+  if (existing && existing.length > 0) {
+    return existing[0];
+  }
+  
+  return await createChatConversation(mode);
 };
 
 export const getChatConversations = async (mode = null, limit = 50) => {

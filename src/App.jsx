@@ -3,7 +3,6 @@ import { Routes, Route, Navigate, useLocation, useNavigate, useSearchParams } fr
 import BottomNav from './components/layout/BottomNav'
 import Sidebar from './components/layout/Sidebar'
 import MobileSidebar from './components/layout/MobileSidebar'
-import XiaohuiFab from './components/XiaohuiFab'
 import PINLock from './components/PINLock'
 import Icon from './components/ui/Icon'
 import WritePage from './pages/WritePage'
@@ -12,9 +11,9 @@ import CalendarPage from './pages/CalendarPage'
 import SettingsPage from './pages/SettingsPage'
 import StatsPage from './pages/StatsPage'
 import XiaohuiPage from './pages/XiaohuiPage'
-import { getSetting } from './db/database'
+import { getSetting, cleanupLegacyData } from './db/database'
 import { initReminder } from './utils/reminder'
-import { checkAndGenerateLetters } from './utils/letterService'
+import { checkAndGenerateLetters, cleanupTestLetters } from './utils/letterService'
 import { Capacitor } from '@capacitor/core'
 import { App as CapacitorApp } from '@capacitor/app'
 import { StatusBar, Style } from '@capacitor/status-bar'
@@ -267,9 +266,11 @@ function App() {
   useEffect(() => {
     checkPINStatus()
     initReminder()
+    cleanupLegacyData()
   }, [])
 
   useEffect(() => {
+    cleanupTestLetters().catch(() => {})
     checkAndGenerateLetters().catch(() => {})
   }, [])
 
@@ -496,8 +497,6 @@ function App() {
       </div>
 
       <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
-
-      <XiaohuiFab />
     </div>
   )
 }

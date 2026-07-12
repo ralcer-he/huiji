@@ -3,6 +3,7 @@ import { createPortal } from 'react-dom'
 import { useAI } from '../hooks/useAI'
 import {
   createChatConversation,
+  getOrCreateChatConversation,
   getChatConversations,
   getChatMessages,
   addChatMessage,
@@ -17,6 +18,18 @@ import { matchEasterEggUser, getEasterEggGreeting } from '../utils/easterEgg'
 
 const WELCOME_MSG = '我来啦～今天有什么想和我分享的吗 (◍•ᴗ•◍)？'
 const QUICK_REPLIES = ['分析最近心情', '给我日记灵感', '陪我聊聊天']
+
+const getEasterEggWelcomeMsg = (eggMatch) => {
+  if (!eggMatch) return null
+  const { user } = eggMatch
+  const name = user.name
+  const greetings = user.greetings
+  const greeting = greetings[Math.floor(Math.random() * greetings.length)]
+  if (user.isDeveloper) {
+    return `好久不见，何洋。\n\n${greeting}`
+  }
+  return `${greeting}\n\n（嘘，这是只属于你的彩蛋哦 🌟）`
+}
 
 function XiaohuiPage() {
   const [messages, setMessages] = useState([])
@@ -33,6 +46,9 @@ function XiaohuiPage() {
   const [letterClosing, setLetterClosing] = useState(false)
   const [userAvatar, setUserAvatar] = useState(null)
   const [previewAvatar, setPreviewAvatar] = useState(false)
+  const [isEasterEggUser, setIsEasterEggUser] = useState(false)
+  const [easterEggUserInfo, setEasterEggUserInfo] = useState(null)
+  const [showFullTime, setShowFullTime] = useState(false)
 
   const handleCloseLetterSpace = useCallback(() => {
     setLetterClosing(true)
@@ -50,6 +66,7 @@ function XiaohuiPage() {
   const recognitionRef = useRef(null)
   const recordingBaseRef = useRef('')
   const recordingFinalRef = useRef('')
+  const initConvRef = useRef(false)
   const { chatWithXiaohui, getAIStatus } = useAI()
 
   const toggleRecording = useCallback(() => {
@@ -117,7 +134,7 @@ function XiaohuiPage() {
 
   const loadConversations = useCallback(async () => {
     try {
-      const list = await getChatConversations(null, 50)
+      const list = await getChatConversations('chat', 50)
       setConversations(list)
     } catch (e) {
       console.error('加载对话列表失败:', e)
@@ -130,7 +147,21 @@ function XiaohuiPage() {
       if (profile.avatar) {
         setUserAvatar(profile.avatar)
       }
+      try {
+        const eggMatch = matchEasterEggUser(profile)
+        if (eggMatch) {
+          setIsEasterEggUser(true)
+          setEasterEggUserInfo(eggMatch.user)
+        } else {
+          setIsEasterEggUser(false)
+          setEasterEggUserInfo(null)
+        }
+      } catch (e) {
+        setIsEasterEggUser(false)
+        setEasterEggUserInfo(null)
+      }
     })
+    localStorage.removeItem('easterEggTriggered')
   }, [loadConversations])
 
   useEffect(() => {
@@ -241,15 +272,29 @@ function XiaohuiPage() {
     try {
       const conv = await createChatConversation('chat')
       setCurrentConversationId(conv.id)
+      
+      let welcomeContent = WELCOME_MSG
+      try {
+        const profile = await getUserProfile()
+        const eggMatch = matchEasterEggUser(profile)
+        if (eggMatch) {
+          const eggWelcome = getEasterEggWelcomeMsg(eggMatch)
+          if (eggWelcome) {
+            welcomeContent = eggWelcome
+          }
+        }
+      } catch (eggErr) {}
+      
       setMessages([
         {
           id: Date.now(),
           isUser: false,
-          content: WELCOME_MSG,
+          content: welcomeContent,
           createdAt: new Date().toISOString(),
+          isEasterEgg: welcomeContent !== WELCOME_MSG,
         },
       ])
-      await addChatMessage(conv.id, { isUser: false, content: WELCOME_MSG, role: 'assistant' })
+      await addChatMessage(conv.id, { isUser: false, content: welcomeContent, role: 'assistant' })
       loadConversations()
       setShowHistory(false)
     } catch (e) {
@@ -259,12 +304,13 @@ function XiaohuiPage() {
 
   useEffect(() => {
     const initConv = async () => {
+      if (initConvRef.current) return
+      initConvRef.current = true
       try {
-        const list = await getChatConversations(null, 1)
-        if (list.length > 0) {
-          const conv = list[0]
-          setCurrentConversationId(conv.id)
-          const msgs = await getChatMessages(conv.id)
+        const conv = await getOrCreateChatConversation('chat')
+        setCurrentConversationId(conv.id)
+        const msgs = await getChatMessages(conv.id)
+        if (msgs.length > 0) {
           setMessages(
             msgs.map((m) => ({
               id: m.id,
@@ -274,14 +320,34 @@ function XiaohuiPage() {
             }))
           )
         } else {
-          startNewConversation()
+          let welcomeContent = WELCOME_MSG
+          try {
+            const profile = await getUserProfile()
+            const eggMatch = matchEasterEggUser(profile)
+            if (eggMatch) {
+              const eggWelcome = getEasterEggWelcomeMsg(eggMatch)
+              if (eggWelcome) {
+                welcomeContent = eggWelcome
+              }
+            }
+          } catch (eggErr) {}
+          setMessages([{
+            id: Date.now(),
+            isUser: false,
+            content: welcomeContent,
+            createdAt: new Date().toISOString(),
+            isEasterEgg: welcomeContent !== WELCOME_MSG,
+          }])
+          await addChatMessage(conv.id, { isUser: false, content: welcomeContent, role: 'assistant' })
         }
+        loadConversations()
       } catch (e) {
         console.error('初始化对话失败:', e)
+        initConvRef.current = false
       }
     }
     initConv()
-  }, [startNewConversation])
+  }, [loadConversations])
 
   const loadConversation = async (convId) => {
     try {
@@ -365,20 +431,6 @@ function XiaohuiPage() {
       }
 
       let replyContent = result.content
-      try {
-        const eggTriggered = localStorage.getItem('easterEggTriggered')
-        if (!eggTriggered) {
-          const profile = await getUserProfile()
-          const eggMatch = matchEasterEggUser(profile)
-          if (eggMatch) {
-            const greeting = getEasterEggGreeting(eggMatch)
-            if (greeting) {
-              replyContent = `${greeting}\n\n${replyContent}`
-              localStorage.setItem('easterEggTriggered', '1')
-            }
-          }
-        }
-      } catch (eggErr) {}
 
       const aiMsg = {
         id: Date.now() + 1,
@@ -421,12 +473,7 @@ function XiaohuiPage() {
   const formatTime = (dateStr) => {
     if (!dateStr) return ''
     const d = new Date(dateStr)
-    const now = new Date()
-    const isToday = d.toDateString() === now.toDateString()
-    if (isToday) {
-      return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
-    }
-    return d.toLocaleDateString('zh-CN', { month: '2-digit', day: '2-digit' })
+    return d.toLocaleTimeString('zh-CN', { hour: '2-digit', minute: '2-digit' })
   }
 
   const formatDateLabel = (dateStr) => {
@@ -436,9 +483,13 @@ function XiaohuiPage() {
     const yesterday = new Date(now)
     yesterday.setDate(yesterday.getDate() - 1)
     const isYesterday = d.toDateString() === yesterday.toDateString()
+    if (showFullTime) {
+      const weekdays = ['周日', '周一', '周二', '周三', '周四', '周五', '周六']
+      return `${d.getFullYear()}年${d.getMonth() + 1}月${d.getDate()}日 ${weekdays[d.getDay()]}`
+    }
     if (isToday) return '今天'
     if (isYesterday) return '昨天'
-    return d.toLocaleDateString('zh-CN', { month: 'long', day: 'numeric' })
+    return `${d.getMonth() + 1}月${d.getDate()}日`
   }
 
   const getDateGroup = (index) => {
@@ -466,16 +517,30 @@ function XiaohuiPage() {
             className="w-9 h-9 rounded-full flex-shrink-0 cursor-pointer overflow-hidden"
           >
             <img
-              src={`${import.meta.env.BASE_URL}icons/xiaohui-avatar.png`}
+              src="/icons/xiaohui-avatar.png"
               alt="小慧"
               draggable={false}
               style={{ width: '100%', height: '100%' }}
             />
           </div>
           <div className="min-w-0">
-            <h1 className="text-[15px] font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
-              小慧
-            </h1>
+            <div className="flex items-center gap-2">
+              <h1 className="text-[15px] font-semibold leading-tight truncate" style={{ color: 'var(--ink)' }}>
+                小慧
+              </h1>
+              {isEasterEggUser && (
+                <span
+                  className="text-[11px] px-2 py-0.5 rounded-full flex-shrink-0"
+                  style={{
+                    backgroundColor: '#FEF3C7',
+                    color: '#D97706',
+                    fontWeight: '500',
+                  }}
+                >
+                  {easterEggUserInfo?.isDeveloper ? '创造者' : '彩蛋用户'}
+                </span>
+              )}
+            </div>
             <div className="flex items-center gap-1.5 mt-0.5">
               <span
                 className="w-1.5 h-1.5 rounded-full flex-shrink-0"
@@ -529,8 +594,9 @@ function XiaohuiPage() {
                 {dateGroup && (
                   <div className="flex justify-center my-4">
                     <span
-                      className="text-[11px]"
+                      className="text-[11px] cursor-pointer transition-opacity hover:opacity-70"
                       style={{ color: 'var(--muted)' }}
+                      onClick={() => setShowFullTime(!showFullTime)}
                     >
                       {formatDateLabel(dateGroup)}
                     </span>
@@ -572,7 +638,7 @@ function XiaohuiPage() {
                         className="w-11 h-11 rounded-full overflow-hidden flex-shrink-0"
                       >
                         <img
-                          src={`${import.meta.env.BASE_URL}icons/xiaohui-avatar.png`}
+                          src="/icons/xiaohui-avatar.png"
                           alt="小慧"
                           draggable={false}
                           style={{ width: '100%', height: '100%' }}
@@ -586,23 +652,23 @@ function XiaohuiPage() {
                     style={{ maxWidth: msg.isUser ? '75%' : '75%' }}
                   >
                     <div
-                      className="whitespace-pre-wrap break-words"
-                      style={{
-                        padding: '10px 18px',
-                        fontSize: '15px',
-                        lineHeight: '1.7',
-                        minWidth: '50px',
-                        backgroundColor: bubbleBg(msg),
-                        color: msg.isUser ? 'white' : 'var(--ink)',
-                        borderRadius: msg.isUser
-                          ? '4px 20px 20px 20px'
-                          : '20px 4px 20px 20px',
-                        border: msg.isUser ? 'none' : '1px solid var(--rule)',
-                        boxShadow: msg.isUser ? '0 2px 10px rgba(93, 173, 226, 0.30)' : 'none',
-                      }}
-                    >
-                      {msg.content}
-                    </div>
+                    className="whitespace-pre-wrap break-words chat-message"
+                    style={{
+                      padding: '10px 18px',
+                      fontSize: '15px',
+                      lineHeight: '1.7',
+                      minWidth: '50px',
+                      backgroundColor: msg.isEasterEgg ? '#FEFCE8' : bubbleBg(msg),
+                      color: msg.isEasterEgg ? '#92400E' : (msg.isUser ? 'white' : 'var(--ink)'),
+                      borderRadius: msg.isUser
+                        ? '4px 20px 20px 20px'
+                        : '20px 4px 20px 20px',
+                      border: msg.isEasterEgg ? '1px solid #FDE68A' : (msg.isUser ? 'none' : '1px solid var(--rule)'),
+                      boxShadow: msg.isEasterEgg ? '0 2px 12px rgba(251, 191, 36, 0.25)' : (msg.isUser ? '0 2px 10px rgba(93, 173, 226, 0.30)' : 'none'),
+                    }}
+                  >
+                    {msg.content}
+                  </div>
                     {(msg.createdAt && !isContinuation) && (
                       <div
                         className="text-[11px] mt-1.5"
@@ -649,7 +715,7 @@ function XiaohuiPage() {
                 className="w-10 h-10 rounded-full flex-shrink-0 overflow-hidden"
               >
                 <img
-                  src={`${import.meta.env.BASE_URL}icons/xiaohui-avatar.png`}
+                  src="/icons/xiaohui-avatar.png"
                   alt="小慧"
                   draggable={false}
                   style={{ width: '100%', height: '100%' }}
@@ -861,7 +927,7 @@ function XiaohuiPage() {
             onClick={(e) => e.stopPropagation()}
           >
             <img
-              src={`${import.meta.env.BASE_URL}icons/xiaohui-avatar.png`}
+              src="/icons/xiaohui-avatar.png"
               alt="小慧头像"
               style={{ width: '100%', height: '100%', display: 'block' }}
             />
