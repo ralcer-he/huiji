@@ -40,17 +40,19 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
   }
 
   useEffect(() => {
+    let cancelled = false
     const init = async () => {
       try {
         const status = await getAIStatus()
-        setAiStatus(status)
+        if (!cancelled) setAiStatus(status)
       } catch (e) {
         console.error('获取 AI 状态失败:', e)
       }
-      await loadConversations()
+      if (!cancelled) await loadConversations()
     }
     init()
-  }, [getAIStatus])
+    return () => { cancelled = true }
+  }, [])
 
   const loadConversations = async () => {
     setHistoryLoading(true)
@@ -86,7 +88,9 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
       setConversationId(conv.id)
       setMessages([])
       setShowHistory(false)
-      await loadConversations()
+      // 直接更新对话列表，避免 loadConversations 重置状态
+      const convs = await getChatConversations('fab_assistant', 20)
+      setConversations(convs)
     } catch (e) {
       console.error('创建对话失败:', e)
     }
@@ -114,10 +118,30 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
     e.stopPropagation()
     try {
       await deleteChatConversation(convId)
+      // 先刷新对话列表
+      const convs = await getChatConversations('fab_assistant', 20)
+      setConversations(convs)
+      
       if (convId === conversationId) {
-        await createNewConversation()
-      } else {
-        await loadConversations()
+        // 删除的是当前对话，切换到最新的对话或创建新的
+        if (convs.length > 0) {
+          const latest = convs[0]
+          setConversationId(latest.id)
+          const msgs = await getChatMessages(latest.id)
+          setMessages(msgs.map(m => ({
+            id: m.id,
+            isUser: m.role === 'user',
+            content: m.content,
+            createdAt: m.createdAt,
+          })))
+        } else {
+          // 没有对话了，创建一个新的
+          const conv = await createChatConversation('fab_assistant', '新对话')
+          setConversationId(conv.id)
+          setMessages([])
+          const updatedConvs = await getChatConversations('fab_assistant', 20)
+          setConversations(updatedConvs)
+        }
       }
     } catch (err) {
       console.error('删除对话失败:', err)
@@ -138,6 +162,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
         const conv = await createChatConversation('fab_assistant')
         setConversationId(conv.id)
         await addChatMessage(conv.id, { role, content })
+        // 刷新对话列表
         const convs = await getChatConversations('fab_assistant', 20)
         setConversations(convs)
       } catch (e) {

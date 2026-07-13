@@ -300,11 +300,11 @@ export const clearAllData = async () => {
 
 export const cleanupLegacyData = async () => {
   try {
-    const CLEAN_VERSION = 'legacyDataCleaned_v1064';
+    const CLEAN_VERSION = 'legacyDataCleaned_v1065';
     const cleanedMarker = await getSetting(CLEAN_VERSION);
     if (!cleanedMarker) {
       const allConversations = await db.chatConversations.toArray();
-      const validModes = ['chat'];
+      const validModes = ['chat', 'fab_assistant'];
 
       const legacyConvs = allConversations.filter(c => !validModes.includes(c.mode));
       if (legacyConvs.length > 0) {
@@ -372,47 +372,19 @@ export const saveDailyMemos = async (memos) => {
 
 // ========== 对话历史相关 ==========
 
-let _createConvLock = null;
-
 export const createChatConversation = async (mode = 'assistant', title = '') => {
-  if (_createConvLock) {
-    const existing = await _createConvLock;
-    if (existing && existing.mode === mode && !title) {
-      return existing;
-    }
-  }
-  
-  let resolveLock;
-  _createConvLock = new Promise(resolve => { resolveLock = resolve; });
-  
-  try {
-    const existing = await db.chatConversations
-      .where('mode').equals(mode)
-      .reverse()
-      .sortBy('updatedAt');
-    
-    if (existing && existing.length > 0 && !title) {
-      resolveLock(existing[0]);
-      return existing[0];
-    }
-    
-    const now = new Date().toISOString();
-    const id = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
-    const conversation = {
-      id,
-      mode,
-      title: title || '新对话',
-      createdAt: now,
-      updatedAt: now,
-      messageCount: 0,
-    };
-    await db.chatConversations.put(conversation);
-    resolveLock(conversation);
-    return conversation;
-  } catch (e) {
-    resolveLock(null);
-    throw e;
-  }
+  const now = new Date().toISOString();
+  const id = `chat_${Date.now()}_${Math.random().toString(36).slice(2, 8)}`;
+  const conversation = {
+    id,
+    mode,
+    title: title || '新对话',
+    createdAt: now,
+    updatedAt: now,
+    messageCount: 0,
+  };
+  await db.chatConversations.put(conversation);
+  return conversation;
 };
 
 export const getOrCreateChatConversation = async (mode = 'chat') => {
@@ -429,12 +401,14 @@ export const getOrCreateChatConversation = async (mode = 'chat') => {
 };
 
 export const getChatConversations = async (mode = null, limit = 50) => {
-  let query = db.chatConversations.orderBy('updatedAt').reverse();
+  let all;
   if (mode) {
-    query = query.filter(c => c.mode === mode);
+    all = await db.chatConversations.where('mode').equals(mode).toArray();
+  } else {
+    all = await db.chatConversations.toArray();
   }
-  const results = await query.limit(limit).toArray();
-  return results;
+  all.sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+  return all.slice(0, limit);
 };
 
 export const getChatConversation = async (id) => {
