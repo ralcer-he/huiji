@@ -4,15 +4,16 @@ import Icon from '../ui/Icon'
 export default function ContactAuthorModal({ onClose }) {
   return createPortal(
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fade-in 0.2s ease-out' }}
       onClick={onClose}
     >
       <div
-        className="w-full max-w-sm overflow-hidden animate-slide-up"
+        className="w-full max-w-sm overflow-hidden mx-4"
         style={{
           backgroundColor: 'var(--bg)',
           borderRadius: '16px',
+          animation: 'modal-pop-in 0.2s cubic-bezier(0.34, 1.56, 0.64, 1)',
         }}
         onClick={(e) => e.stopPropagation()}
       >
