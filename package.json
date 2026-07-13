@@ -1,7 +1,7 @@
 {
   "name": "huiji",
   "private": true,
-  "version": "1.06.2",
+  "version": "1.06.3",
   "type": "module",
   "scripts": {
     "dev": "vite",

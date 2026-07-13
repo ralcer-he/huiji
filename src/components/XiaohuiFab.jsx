@@ -245,9 +245,9 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
     try {
       let intentResult = parseIntent(userText)
 
-      const hasExplicitType = /记到|记在|写到|写在|加到|加在|添加到|记录到|写(一篇|个|篇)|记(一篇|个|条|一下)|(随笔|备忘|日记|心情)[:：]/.test(userText)
+      const hasExplicitType = /记到|记在|写到|写在|加到|加在|添加到|记录到|写(一篇|个|条|篇)|记(一篇|个|条|一下)|(随笔|备忘|日记|心情)[:：]/.test(userText)
 
-      if (!hasExplicitType && aiStatus?.enabled && aiStatus?.level <= 2) {
+      if (!hasExplicitType && aiStatus?.enabled) {
         try {
           const aiResult = await analyzeIntent(userText)
           if (aiResult && aiResult.confidence >= 0.6) {
@@ -804,6 +804,7 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
   const hasMoved = useRef(false)
   const currentPosRef = useRef(position)
   const isDockedRef = useRef(isDocked)
+  const lastInteractionRef = useRef(null) // 'touch' or 'mouse'
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
   const btnSize = 90
@@ -816,6 +817,18 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
   useEffect(() => { isDockedRef.current = isDocked }, [isDocked])
 
   const handleDragStart = useCallback(e => {
+    // 防止触摸和鼠标事件双重触发：手机上 touchstart 后会再触发 mousedown，跳过后者
+    const isTouch = e.type === 'touchstart'
+    if (isTouch) {
+      lastInteractionRef.current = 'touch'
+    } else if (lastInteractionRef.current === 'touch') {
+      // 刚处理过 touch 事件，跳过紧接着的 mouse 事件
+      lastInteractionRef.current = null
+      return
+    } else {
+      lastInteractionRef.current = 'mouse'
+    }
+
     e.preventDefault()
     if (isDockedRef.current) {
       setIsDocked(false)
@@ -854,7 +867,15 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
       setCurrentPos(newPos)
     }
 
-    const onEnd = () => {
+    const onEnd = (e) => {
+      // 防止 touchend 后 mouseup 重复触发
+      const isTouch = e.type === 'touchend'
+      if (!isTouch && lastInteractionRef.current === 'touch') {
+        lastInteractionRef.current = null
+        return
+      }
+      if (isTouch) lastInteractionRef.current = null
+
       setIsDragging(false)
 
       if (!hasMoved.current) {
