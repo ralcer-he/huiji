@@ -300,7 +300,7 @@ export const clearAllData = async () => {
 
 export const cleanupLegacyData = async () => {
   try {
-    const CLEAN_VERSION = 'legacyDataCleaned_v1065';
+    const CLEAN_VERSION = 'legacyDataCleaned_v1066';
     const cleanedMarker = await getSetting(CLEAN_VERSION);
     if (!cleanedMarker) {
       const allConversations = await db.chatConversations.toArray();
@@ -316,28 +316,31 @@ export const cleanupLegacyData = async () => {
       }
 
       const remaining = await db.chatConversations.toArray();
-      const chatConvs = remaining
-        .filter(c => c.mode === 'chat')
-        .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
+      
+      for (const mode of validModes) {
+        const modeConvs = remaining
+          .filter(c => c.mode === mode)
+          .sort((a, b) => new Date(b.updatedAt) - new Date(a.updatedAt));
 
-      if (chatConvs.length > 1) {
-        const chatConvDetails = [];
-        for (const conv of chatConvs) {
-          const msgs = await db.chatMessages.where('conversationId').equals(conv.id).toArray();
-          const userMsgCount = msgs.filter(m => m.role === 'user').length;
-          chatConvDetails.push({ conv, userMsgCount, totalMsgCount: msgs.length });
-        }
+        if (modeConvs.length > 1) {
+          const modeConvDetails = [];
+          for (const conv of modeConvs) {
+            const msgs = await db.chatMessages.where('conversationId').equals(conv.id).toArray();
+            const userMsgCount = msgs.filter(m => m.role === 'user').length;
+            modeConvDetails.push({ conv, userMsgCount, totalMsgCount: msgs.length });
+          }
 
-        const withUserMsgs = chatConvDetails.filter(c => c.userMsgCount > 0);
-        const toKeep = withUserMsgs.length > 0
-          ? withUserMsgs[0].conv.id
-          : chatConvDetails[0].conv.id;
+          const withUserMsgs = modeConvDetails.filter(c => c.userMsgCount > 0);
+          const toKeep = withUserMsgs.length > 0
+            ? withUserMsgs[0].conv.id
+            : modeConvDetails[0].conv.id;
 
-        const toDelete = chatConvDetails.filter(c => c.conv.id !== toKeep);
-        console.log(`清理 ${toDelete.length} 个多余对话，保留 ${toKeep}`);
-        for (const item of toDelete) {
-          await db.chatMessages.where('conversationId').equals(item.conv.id).delete();
-          await db.chatConversations.delete(item.conv.id);
+          const toDelete = modeConvDetails.filter(c => c.conv.id !== toKeep);
+          console.log(`清理模式 ${mode}: 删除 ${toDelete.length} 个多余对话，保留 ${toKeep}`);
+          for (const item of toDelete) {
+            await db.chatMessages.where('conversationId').equals(item.conv.id).delete();
+            await db.chatConversations.delete(item.conv.id);
+          }
         }
       }
 

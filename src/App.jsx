@@ -406,6 +406,41 @@ function App() {
     return <PINLock onUnlock={handleUnlock} />
   }
 
+  if (location.pathname === '/xiaohui') {
+    return (
+      <div
+        className="min-h-screen flex flex-col overflow-x-hidden"
+        style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)' }}
+      >
+        <div className="hidden lg:block fixed left-0 top-0 bottom-0 z-10 h-full w-60">
+          <Sidebar />
+        </div>
+        <div className="hidden md:flex lg:hidden">
+          <Sidebar />
+        </div>
+        <header className="md:hidden sticky top-0 z-30 flex-shrink-0 w-full flex items-center overflow-hidden" style={{ backgroundColor: 'var(--header-bg)', height: '44px' }}>
+          <div className="h-full flex items-center" style={{ paddingLeft: '20px' }}>
+            <button
+              onClick={() => setSidebarOpen(true)}
+              className="p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
+            >
+              <Icon name="menu" size={22} color="var(--header-text)" strokeWidth={2} />
+            </button>
+          </div>
+        </header>
+        <main className="flex-1 flex flex-col overflow-hidden md:flex-1 lg:fixed lg:inset-0 lg:h-screen lg:pt-12"
+          style={{ left: '15rem' }}
+        >
+          <div className="flex-1 flex flex-col overflow-hidden">
+            <XiaohuiPage />
+          </div>
+        </main>
+        <MobileSidebar isOpen={sidebarOpen} onClose={() => setSidebarOpen(false)} />
+        <XiaohuiFab />
+      </div>
+    )
+  }
+
   return (
     <div
       className="min-h-screen flex flex-col overflow-x-hidden"
