@@ -1,0 +1,29 @@
+[package]
+name = "huiji"
+version = "1.0.7"
+description = "AI情绪感知日记"
+authors = ["ralcer"]
+edition = "2021"
+
+[package.metadata.tauri]
+identifier = "com.huiji.app"
+
+[lib]
+name = "huiji_lib"
+crate-type = ["staticlib", "cdylib", "rlib"]
+
+[build-dependencies]
+tauri-build = { version = "2", features = [] }
+
+[dependencies]
+tauri = { version = "2", features = [] }
+tauri-plugin-shell = "2"
+serde = { version = "1", features = ["derive"] }
+serde_json = "1"
+
+[profile.release]
+panic = "abort"
+codegen-units = 1
+lto = true
+opt-level = "s"
+strip = true

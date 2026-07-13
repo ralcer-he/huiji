@@ -1,0 +1,20 @@
+{
+  "appId": "com.huiji.app",
+  "appName": "慧记",
+  "webDir": "dist",
+  "server": {
+    "androidScheme": "https"
+  },
+  "plugins": {
+    "Keyboard": {
+      "resize": "native",
+      "resizeOnFullScreen": true,
+      "overlaysWebView": false
+    },
+    "SplashScreen": {
+      "launchShowDuration": 1500,
+      "backgroundColor": "#7EC8E3",
+      "showSpinner": false
+    }
+  }
+}

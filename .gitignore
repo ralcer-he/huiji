@@ -1,0 +1,35 @@
+# 依赖
+node_modules/
+
+# 构建产物
+dist/
+
+# Tauri
+src-tauri/target/
+
+# Capacitor
+android/
+
+# IDE文档
+.trae/
+
+# 迭代文档
+ralph/
+
+# 系统文件
+.DS_Store
+Thumbs.db
+
+# 日志
+*.log
+npm-debug.log*
+
+# 临时截图
+shots/
+test_screenshots/
+
+# Python 脚本
+*.py
+
+# 临时脚本
+*.cjs
