@@ -33,21 +33,11 @@ export default function ContactAuthorModal({ onClose }) {
 
         {/* 内容 */}
         <div className="px-5 py-5 space-y-5">
-          {/* 作者信息 */}
-          <div className="flex items-center gap-4">
-            <div
-              className="w-14 h-14 rounded-full flex items-center justify-center text-lg font-bold flex-shrink-0"
-              style={{ backgroundColor: '#7EC8E3', color: 'white' }}
-            >
-              R
-            </div>
-            <div>
-              <p className="text-[15px] font-semibold" style={{ color: 'var(--ink)' }}>ralcer</p>
-              <p className="text-[13px] mt-0.5" style={{ color: 'var(--muted)' }}>慧记开发者</p>
-            </div>
+          <div className="text-center py-3">
+            <p className="text-[18px] font-bold" style={{ color: 'var(--ink)' }}>ralcer</p>
+            <p className="text-[13px] mt-1" style={{ color: 'var(--muted)' }}>慧记开发者</p>
           </div>
 
-          {/* 邮箱 */}
           <div
             className="flex items-center gap-3 p-3 rounded-xl"
             style={{ backgroundColor: 'var(--bg2)' }}
@@ -59,7 +49,6 @@ export default function ContactAuthorModal({ onClose }) {
             </div>
           </div>
 
-          {/* 鼓励反馈 */}
           <div className="text-center py-2">
             <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink2)' }}>
               如果你在使用过程中遇到任何问题，或者有好的建议和想法，欢迎随时联系我 (◕ᴗ◕✿)
