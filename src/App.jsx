@@ -336,6 +336,23 @@ function App() {
   const lastBackPressRef = useRef(0)
 
   useEffect(() => {
+    // 启动时清理旧 Service Worker 和缓存，确保加载最新代码
+    ;(async () => {
+      try {
+        let hadSW = false
+        if ('serviceWorker' in navigator) {
+          const regs = await navigator.serviceWorker.getRegistrations()
+          hadSW = regs.length > 0
+          for (const r of regs) await r.unregister()
+        }
+        if ('caches' in window) {
+          const keys = await caches.keys()
+          for (const k of keys) await caches.delete(k)
+        }
+        if (hadSW) window.location.reload()
+      } catch (e) {}
+    })()
+
     checkPINStatus()
     initReminder()
     cleanupLegacyData()

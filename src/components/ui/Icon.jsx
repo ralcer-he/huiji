@@ -128,6 +128,7 @@ export const ICON_PATHS = {
   mailbox: 'M2 10c0-3.31 2.69-6 6-6h8c3.31 0 6 2.69 6 6v10H2V10z M10 4V2h4v2',
   quill: 'M20.24 12.24a6 6 0 00-8.49-8.49L5 10.5V19h8.5l6.74-6.76z M16 8L2 22',
   'paper-plane': 'M22 2L11 13M22 2l-7 20-4-9-9-4 20-7z',
+  copy: 'M8 8h8a2 2 0 012 2v8a2 2 0 01-2 2H8a2 2 0 01-2-2v-8a2 2 0 012-2z M16 8V6a2 2 0 00-2-2H6a2 2 0 00-2 2v8a2 2 0 002 2h2',
 }
 
 export default function Icon({ name, size = 20, color = 'currentColor', strokeWidth = 1.5, className = '', style = {} }) {
