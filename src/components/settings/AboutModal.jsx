@@ -1,5 +1,6 @@
 import { createPortal } from 'react-dom'
 import Icon from '../ui/Icon'
+import { CURRENT_VERSION } from '../../utils/updateChecker'
 
 const ABOUT_CONTENT = [
   {
@@ -105,7 +106,7 @@ export default function AboutModal({ onClose }) {
             </div>
             <h3 className="text-[18px] font-bold text-center" style={{ color: 'var(--ink)' }}>慧记</h3>
             <p className="text-[12px] mt-1 text-center" style={{ color: 'var(--muted)' }}>AI 情绪感知日记</p>
-            <p className="text-[11px] mt-0.5 text-center" style={{ color: 'var(--muted)' }}>v1.0.0</p>
+            <p className="text-[11px] mt-0.5 text-center" style={{ color: 'var(--muted)' }}>v{CURRENT_VERSION}</p>
           </div>
 
           {/* 总览 */}
@@ -128,11 +129,6 @@ export default function AboutModal({ onClose }) {
             </div>
           ))}
 
-          {/* 联系作者 */}
-          <div className="text-center py-4">
-            <p className="text-[13px] font-medium mb-1" style={{ color: 'var(--ink)' }}>联系作者</p>
-            <p className="text-[13px]" style={{ color: 'var(--muted)' }}>✉️ 2487054344@qq.com</p>
-          </div>
         </div>
       </div>
     </div>,

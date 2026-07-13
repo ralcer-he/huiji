@@ -9,15 +9,20 @@ import ReminderSettingsPanel from '../components/settings/ReminderSettingsPanel'
 import ToolbarSettings from '../components/settings/ToolbarSettings'
 import DataManagementModal from '../components/settings/DataManagementModal'
 import AboutModal from '../components/settings/AboutModal'
+import ContactAuthorModal from '../components/settings/ContactAuthorModal'
 import { exportAllData } from '../db/database'
 import { recordBackupDate } from '../utils/reminder'
 import { saveOrShareFile } from '../utils/fileHelper'
+import { CURRENT_VERSION, forceCheckUpdate } from '../utils/updateChecker'
 
 function SettingsPage() {
   const [showDataModal, setShowDataModal] = useState(false)
   const [showAboutModal, setShowAboutModal] = useState(false)
   const [lastBackupDate, setLastBackupDate] = useState(null)
   const [backingUp, setBackingUp] = useState(false)
+  const [updateChecking, setUpdateChecking] = useState(false)
+  const [updateResult, setUpdateResult] = useState(null) // null | { hasUpdate, latest }
+  const [showContactModal, setShowContactModal] = useState(false)
 
   const handleBackupNow = async () => {
     if (backingUp) return
@@ -35,9 +40,28 @@ function SettingsPage() {
     setBackingUp(false)
   }
 
+  const handleCheckUpdate = async () => {
+    // 如果已经有更新结果，点击直接跳转到更新页面
+    if (updateResult?.hasUpdate) {
+      window.open(updateResult.latest?.htmlUrl, '_blank')
+      return
+    }
+    if (updateChecking) return
+    setUpdateChecking(true)
+    try {
+      const result = await forceCheckUpdate()
+      setUpdateResult(result)
+    } catch {
+      setUpdateResult(null)
+    }
+    setUpdateChecking(false)
+  }
+
   const settingItems = [
     { iconName: 'save', label: '数据管理', desc: '导出/导入/清空', onClick: () => setShowDataModal(true) },
-    { iconName: 'info', label: '关于慧记', desc: 'v1.0.0', onClick: () => setShowAboutModal(true) },
+    { iconName: 'refresh', label: '检查更新', desc: updateChecking ? '检查中...' : (updateResult?.hasUpdate ? `发现新版本 ${updateResult.latest?.name}` : `当前版本 v${CURRENT_VERSION}`), onClick: handleCheckUpdate },
+    { iconName: 'mail', label: '联系作者', desc: '建议与反馈', onClick: () => setShowContactModal(true) },
+    { iconName: 'info', label: '关于慧记', desc: 'AI 情绪感知日记', onClick: () => setShowAboutModal(true) },
   ]
 
   return (
@@ -122,7 +146,7 @@ function SettingsPage() {
 
       {/* 底部版本号 */}
       <div className="mt-8 text-center">
-        <p className="text-xs" style={{ color: 'var(--muted)' }}>慧记 v1.0.0</p>
+        <p className="text-xs" style={{ color: 'var(--muted)' }}>慧记 v{CURRENT_VERSION}</p>
       </div>
 
       {/* 数据管理弹窗 */}
@@ -137,6 +161,11 @@ function SettingsPage() {
       {/* 关于慧记弹窗 */}
       {showAboutModal && (
         <AboutModal onClose={() => setShowAboutModal(false)} />
+      )}
+
+      {/* 联系作者弹窗 */}
+      {showContactModal && (
+        <ContactAuthorModal onClose={() => setShowContactModal(false)} />
       )}
     </div>
   )

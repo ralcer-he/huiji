@@ -19,6 +19,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { Keyboard } from '@capacitor/keyboard'
 import XiaohuiFab from './components/XiaohuiFab'
+import { checkForUpdate, CURRENT_VERSION } from './utils/updateChecker'
 
 function DesktopContent() {
   const location = useLocation()
@@ -255,11 +256,81 @@ function MobileDatePicker() {
   )
 }
 
+function UpdateModal({ latest, onDismiss }) {
+  if (!latest) return null
+  const downloadUrl = latest.assets?.find(a => a.name.endsWith('.apk'))?.url
+    || latest.assets?.find(a => a.name.endsWith('.exe'))?.url
+    || latest.htmlUrl
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fade-in 0.2s ease-out' }}
+      onClick={onDismiss}
+    >
+      <div
+        className="w-full max-w-sm overflow-hidden animate-slide-up"
+        style={{ backgroundColor: 'var(--bg)', borderRadius: '16px' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-5 pb-4 text-center">
+          <div
+            className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center"
+            style={{ backgroundColor: '#E8F4FD' }}
+          >
+            <Icon name="refresh" size={24} color="#5DADE2" strokeWidth={2} />
+          </div>
+          <h3 className="text-[16px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+            发现新版本
+          </h3>
+          <p className="text-[13px] mb-1" style={{ color: 'var(--ink2)' }}>
+            {latest.name}
+          </p>
+          <p className="text-[12px] mb-3" style={{ color: 'var(--muted)' }}>
+            当前版本 v{CURRENT_VERSION}
+          </p>
+          {latest.body && (
+            <div
+              className="text-left text-[12px] leading-relaxed max-h-32 overflow-y-auto px-3 py-2.5 rounded-xl"
+              style={{ backgroundColor: 'var(--bg2)', color: 'var(--ink2)' }}
+            >
+              {latest.body.split('\n').filter(l => l.trim()).slice(0, 8).map((line, i) => (
+                <p key={i} className={i === 0 ? 'font-medium mb-1' : 'mb-0.5'} style={{ color: i === 0 ? 'var(--ink)' : undefined }}>
+                  {line.replace(/^#+\s*/, '').replace(/^\*\*.*?\*\*/, m => m.replace(/\*\*/g, ''))}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex border-t" style={{ borderColor: 'var(--rule)' }}>
+          <a
+            href={downloadUrl}
+            target="_blank"
+            rel="noopener noreferrer"
+            className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
+            style={{ color: '#5DADE2' }}
+          >
+            去更新
+          </a>
+          <div className="w-px" style={{ backgroundColor: 'var(--rule)' }} />
+          <button
+            onClick={onDismiss}
+            className="flex-1 py-3.5 text-center text-[15px] transition-opacity hover:opacity-80"
+            style={{ color: 'var(--muted)' }}
+          >
+            稍后再说
+          </button>
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function App() {
   const [pinEnabled, setPinEnabled] = useState(false)
   const [isUnlocked, setIsUnlocked] = useState(false)
   const [checkingPIN, setCheckingPIN] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
+  const [updateInfo, setUpdateInfo] = useState(null) // { hasUpdate, latest }
   const location = useLocation()
   const navigate = useNavigate()
   const lastBackPressRef = useRef(0)
@@ -268,6 +339,10 @@ function App() {
     checkPINStatus()
     initReminder()
     cleanupLegacyData()
+    // 异步检查更新，不影响启动速度
+    checkForUpdate().then(result => {
+      if (result?.hasUpdate) setUpdateInfo(result)
+    }).catch(() => {})
   }, [])
 
   useEffect(() => {
@@ -412,6 +487,12 @@ function App() {
         className="min-h-screen flex flex-col overflow-x-hidden"
         style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)' }}
       >
+        {updateInfo?.hasUpdate && (
+          <UpdateModal
+            latest={updateInfo.latest}
+            onDismiss={() => setUpdateInfo(null)}
+          />
+        )}
         <div className="hidden lg:block fixed left-0 top-0 bottom-0 z-10 h-full w-60">
           <Sidebar />
         </div>
@@ -446,6 +527,12 @@ function App() {
       className="min-h-screen flex flex-col overflow-x-hidden"
       style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)' }}
     >
+      {updateInfo?.hasUpdate && (
+        <UpdateBanner
+          latest={updateInfo.latest}
+          onDismiss={() => setUpdateInfo(null)}
+        />
+      )}
       {/* 桌面端布局 (lg+) */}
       <div className="hidden lg:flex flex-1">
         {/* 侧边栏 - fixed定位，脱离流式布局，不参与宽度计算 */}
