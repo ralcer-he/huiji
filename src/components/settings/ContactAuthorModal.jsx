@@ -5,12 +5,37 @@ import Icon from '../ui/Icon'
 export default function ContactAuthorModal({ onClose }) {
   const [copied, setCopied] = useState(false)
 
-  const handleCopy = async () => {
+  const handleCopy = () => {
+    const email = '2487054344@qq.com'
     try {
-      await navigator.clipboard.writeText('2487054344@qq.com')
+      if (navigator.clipboard && window.isSecureContext) {
+        navigator.clipboard.writeText(email).then(() => {
+          setCopied(true)
+          setTimeout(() => setCopied(false), 2000)
+        }).catch(() => fallbackCopy(email))
+      } else {
+        fallbackCopy(email)
+      }
+    } catch (e) {
+      fallbackCopy(email)
+    }
+  }
+
+  const fallbackCopy = (text) => {
+    try {
+      const ta = document.createElement('textarea')
+      ta.value = text
+      ta.style.cssText = 'position:fixed;left:-9999px;top:-9999px;opacity:0'
+      document.body.appendChild(ta)
+      ta.select()
+      ta.setSelectionRange(0, text.length)
+      document.execCommand('copy')
+      document.body.removeChild(ta)
       setCopied(true)
       setTimeout(() => setCopied(false), 2000)
-    } catch (e) {}
+    } catch (e2) {
+      console.error('复制失败:', e2)
+    }
   }
 
   return createPortal(
@@ -61,8 +86,8 @@ export default function ContactAuthorModal({ onClose }) {
             </div>
             <button
               onClick={handleCopy}
-              className="flex-shrink-0 w-8 h-8 rounded-full flex items-center justify-center transition-all hover:opacity-80"
-              style={{ backgroundColor: 'var(--accent3)' }}
+              className="flex-shrink-0 w-9 h-9 rounded-full flex items-center justify-center transition-all active:scale-95"
+              style={{ backgroundColor: 'var(--accent3)', minWidth: '36px', minHeight: '36px' }}
               title="复制邮箱"
             >
               <Icon name={copied ? 'check' : 'copy'} size={16} color={copied ? '#22c55e' : 'var(--accent)'} />
