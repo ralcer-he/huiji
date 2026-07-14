@@ -28,6 +28,10 @@ npm-debug.log*
 shots/
 test_screenshots/
 
+# 文档和截图
+docs/
+screenshots/
+
 # Python 脚本
 *.py
 
