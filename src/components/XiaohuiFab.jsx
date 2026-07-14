@@ -10,6 +10,7 @@ import {
   getChatMessages,
   addChatMessage,
   deleteChatConversation,
+  getUserProfile,
 } from '../db/database'
 import Icon from './ui/Icon'
 
@@ -25,6 +26,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
   const [conversations, setConversations] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [pendingAction, setPendingAction] = useState(null)
+  const [userAvatar, setUserAvatar] = useState(null)
 
   const chatRef = useRef(null)
   const messagesEndRef = useRef(null)
@@ -48,10 +50,22 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
       } catch (e) {
         console.error('获取 AI 状态失败:', e)
       }
+      try {
+        const profile = await getUserProfile()
+        if (!cancelled && profile?.avatar) setUserAvatar(profile.avatar)
+      } catch {}
       if (!cancelled) await loadConversations()
     }
     init()
     return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    const handleAvatarUpdate = (e) => {
+      setUserAvatar(e.detail?.avatar || null)
+    }
+    window.addEventListener('avatar-updated', handleAvatarUpdate)
+    return () => window.removeEventListener('avatar-updated', handleAvatarUpdate)
   }, [])
 
   const loadConversations = async () => {
@@ -648,10 +662,14 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
                 )}
                 {msg.isUser && (
                   <div
-                    className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center"
-                    style={{ backgroundColor: '#E0E0E0' }}
+                    className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden"
+                    style={{ backgroundColor: userAvatar ? 'transparent' : '#E0E0E0' }}
                   >
-                    <Icon name="user" size={18} color="#999" strokeWidth={1.2} />
+                    {userAvatar ? (
+                      <img src={userAvatar} alt="用户头像" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <Icon name="user" size={18} color="#999" strokeWidth={1.2} />
+                    )}
                   </div>
                 )}
 
