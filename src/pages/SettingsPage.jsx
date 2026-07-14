@@ -72,13 +72,25 @@ function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
               去更新
             </a>
           ) : (
-            <button
-              onClick={onDismiss}
-              className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
-              style={{ color: '#4CAF50' }}
-            >
-              好的
-            </button>
+            <>
+              <a
+                href="https://github.com/ralcer-he/huiji/releases"
+                target="_blank"
+                rel="noopener noreferrer"
+                className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
+                style={{ color: '#5DADE2' }}
+              >
+                下载新版本
+              </a>
+              <div className="w-px" style={{ backgroundColor: 'var(--rule)' }} />
+              <button
+                onClick={onDismiss}
+                className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
+                style={{ color: '#4CAF50' }}
+              >
+                好的
+              </button>
+            </>
           )}
           {hasUpdate && (
             <>

@@ -1,7 +1,6 @@
 import { getSetting, saveSetting } from '../db/database'
 
 const CURRENT_VERSION = '1.1'
-const GITEE_REPO = 'ralcer-he/huiji'
 const GITHUB_REPO = 'ralcer-he/huiji'
 const CHECK_INTERVAL = 24 * 60 * 60 * 1000 // 24小时检查一次
 
@@ -32,34 +31,7 @@ function compareVersions(a, b) {
 }
 
 /**
- * 从 Gitee Releases 获取最新版本号（国内优先，速度快）
- */
-async function fetchFromGitee() {
-  try {
-    const resp = await fetch(
-      `https://gitee.com/api/v5/repos/${GITEE_REPO}/releases/latest`,
-      { signal: AbortSignal.timeout(5000) }
-    )
-    if (!resp.ok) return null
-    const data = await resp.json()
-    return {
-      tag: data.tag_name,
-      name: data.name || data.tag_name,
-      body: data.body || '',
-      htmlUrl: `https://gitee.com/${GITEE_REPO}/releases`,
-      assets: (data.assets || []).map(a => ({
-        name: a.name,
-        url: a.browser_download_url,
-        size: a.size,
-      })),
-    }
-  } catch {
-    return null
-  }
-}
-
-/**
- * 从 GitHub Releases 获取最新版本号（备用）
+ * 从 GitHub Releases 获取最新版本号
  */
 async function fetchFromGithub() {
   try {
@@ -86,13 +58,6 @@ async function fetchFromGithub() {
 }
 
 /**
- * 获取最新版本：优先 Gitee，失败回退 GitHub
- */
-async function fetchLatestVersion() {
-  return (await fetchFromGitee()) || (await fetchFromGithub())
-}
-
-/**
  * 检查是否有新版本，返回 { hasUpdate, latest } 或 null
  * 有 24 小时缓存，不会频繁请求
  */
@@ -109,7 +74,7 @@ export async function checkForUpdate() {
     }
   }
 
-  const latest = await fetchLatestVersion()
+  const latest = await fetchFromGithub()
   if (!latest) return null
 
   const latestVersion = latest.tag.replace(/^v/, '')

@@ -976,6 +976,10 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
 export default function XiaohuiFab() {
   const [open, setOpen] = useState(false)
   const [aiAvailable, setAiAvailable] = useState(true)
+  const [fabEnabled, setFabEnabled] = useState(() => {
+    const v = localStorage.getItem('xiaohui_fab_enabled')
+    return v === null ? true : v === 'true'
+  })
   const [fabPosition, setFabPosition] = useState(() => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
     const saved = localStorage.getItem(
@@ -1005,6 +1009,16 @@ export default function XiaohuiFab() {
     return { x: Math.max(0, window.innerWidth / 2 - 200), y: 80 }
   })
   const { getAIStatus } = useAI()
+
+  useEffect(() => {
+    const handler = (e) => {
+      const enabled = e.detail?.enabled ?? true
+      setFabEnabled(enabled)
+      if (!enabled) setOpen(false)
+    }
+    window.addEventListener('fab-enabled-change', handler)
+    return () => window.removeEventListener('fab-enabled-change', handler)
+  }, [])
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -1065,6 +1079,8 @@ export default function XiaohuiFab() {
     }
     setOpen(true)
   }
+
+  if (!fabEnabled) return null
 
   return (
     <div className="fab-container">

@@ -1,6 +1,9 @@
 import { createPortal } from 'react-dom'
+import { useState } from 'react'
 import Icon from '../ui/Icon'
 import { CURRENT_VERSION } from '../../utils/updateChecker'
+
+const DEMO_URL = 'https://ralcer-he.github.io/huiji-page/'
 
 const ABOUT_CONTENT = [
   {
@@ -65,6 +68,26 @@ const ABOUT_CONTENT = [
 ]
 
 export default function AboutModal({ onClose }) {
+  const [copied, setCopied] = useState(false)
+
+  const handleCopy = async () => {
+    try {
+      await navigator.clipboard.writeText(DEMO_URL)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    } catch {
+      // fallback
+      const ta = document.createElement('textarea')
+      ta.value = DEMO_URL
+      document.body.appendChild(ta)
+      ta.select()
+      document.execCommand('copy')
+      document.body.removeChild(ta)
+      setCopied(true)
+      setTimeout(() => setCopied(false), 2000)
+    }
+  }
+
   return createPortal(
     <div
       className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
@@ -113,6 +136,36 @@ export default function AboutModal({ onClose }) {
           <p className="text-[13px] leading-relaxed" style={{ color: 'var(--ink2)' }}>
             慧记是一款 AI 情绪感知日记应用。将传统书写与 AI 深度结合，帮你记录生活、感知情绪、看见内心的轨迹。支持随笔、日记、心情、备忘四种记录方式，配有独立 AI 助手「小慧」，既是你的聊天伙伴，也是你的写作助手和情绪分析师。
           </p>
+
+          {/* 官方主页 */}
+          <div
+            className="flex items-center gap-3 px-4 py-3 rounded-xl"
+            style={{ backgroundColor: 'var(--bg2)' }}
+          >
+            <Icon name="link" size={18} color="var(--accent)" />
+            <div className="flex-1 min-w-0">
+              <p className="text-[12px] font-medium" style={{ color: 'var(--ink)' }}>官方主页</p>
+              <a
+                href={DEMO_URL}
+                target="_blank"
+                rel="noopener noreferrer"
+                className="text-[11px] truncate block"
+                style={{ color: 'var(--accent)' }}
+              >
+                {DEMO_URL}
+              </a>
+            </div>
+            <button
+              onClick={handleCopy}
+              className="flex-shrink-0 px-2.5 py-1 rounded-lg text-[11px] font-medium transition-all duration-200"
+              style={{
+                backgroundColor: copied ? '#E8F8E8' : 'var(--bg)',
+                color: copied ? '#4CAF50' : 'var(--muted)',
+              }}
+            >
+              {copied ? '已复制' : '复制'}
+            </button>
+          </div>
 
           {/* 各模块 */}
           {ABOUT_CONTENT.map((section) => (
