@@ -4,6 +4,7 @@ import Icon from '../ui/Icon'
 import AvatarCropper from '../AvatarCropper'
 import { getUserProfile, saveUserProfile } from '../../db/database'
 import { compressImage } from '../../utils/imageHelper'
+import { CURRENT_VERSION } from '../../utils/updateChecker'
 
 function Sidebar() {
   const [avatar, setAvatar] = useState(null)
@@ -151,7 +152,7 @@ function Sidebar() {
           className="text-center text-[11px] tracking-wider select-none"
           style={{ color: 'var(--muted)', opacity: 0.85 }}
         >
-          慧记 v1.0.0
+          慧记 v{CURRENT_VERSION}
         </p>
       </div>
     </aside>

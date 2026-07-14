@@ -256,34 +256,34 @@ function MobileDatePicker() {
   )
 }
 
-function UpdateModal({ latest, onDismiss }) {
+function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
   if (!latest) return null
   const downloadUrl = latest.assets?.find(a => a.name.endsWith('.apk'))?.url
     || latest.assets?.find(a => a.name.endsWith('.exe'))?.url
     || latest.htmlUrl
   return (
     <div
-      className="fixed inset-0 z-50 flex items-end sm:items-center justify-center"
+      className="fixed inset-0 z-50 flex items-center justify-center"
       style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fade-in 0.2s ease-out' }}
       onClick={onDismiss}
     >
       <div
-        className="w-full max-w-sm overflow-hidden animate-slide-up"
+        className="w-full max-w-sm mx-4 overflow-hidden animate-slide-up"
         style={{ backgroundColor: 'var(--bg)', borderRadius: '16px' }}
         onClick={(e) => e.stopPropagation()}
       >
         <div className="px-5 pt-5 pb-4 text-center">
           <div
             className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center"
-            style={{ backgroundColor: '#E8F4FD' }}
+            style={{ backgroundColor: hasUpdate ? '#E8F4FD' : '#E8F8E8' }}
           >
-            <Icon name="refresh" size={24} color="#5DADE2" strokeWidth={2} />
+            <Icon name={hasUpdate ? 'refresh' : 'check'} size={24} color={hasUpdate ? '#5DADE2' : '#4CAF50'} strokeWidth={2} />
           </div>
           <h3 className="text-[16px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
-            发现新版本
+            {hasUpdate ? '发现新版本' : '已是最新版本'}
           </h3>
           <p className="text-[13px] mb-1" style={{ color: 'var(--ink2)' }}>
-            {latest.name}
+            {latest.name || `v${CURRENT_VERSION}`}
           </p>
           <p className="text-[12px] mb-3" style={{ color: 'var(--muted)' }}>
             当前版本 v{CURRENT_VERSION}
@@ -302,23 +302,37 @@ function UpdateModal({ latest, onDismiss }) {
           )}
         </div>
         <div className="flex border-t" style={{ borderColor: 'var(--rule)' }}>
-          <a
-            href={downloadUrl}
-            target="_blank"
-            rel="noopener noreferrer"
-            className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
-            style={{ color: '#5DADE2' }}
-          >
-            去更新
-          </a>
-          <div className="w-px" style={{ backgroundColor: 'var(--rule)' }} />
-          <button
-            onClick={onDismiss}
-            className="flex-1 py-3.5 text-center text-[15px] transition-opacity hover:opacity-80"
-            style={{ color: 'var(--muted)' }}
-          >
-            稍后再说
-          </button>
+          {hasUpdate ? (
+            <a
+              href={downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
+              style={{ color: '#5DADE2' }}
+            >
+              去更新
+            </a>
+          ) : (
+            <button
+              onClick={onDismiss}
+              className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
+              style={{ color: '#4CAF50' }}
+            >
+              好的
+            </button>
+          )}
+          {hasUpdate && (
+            <>
+              <div className="w-px" style={{ backgroundColor: 'var(--rule)' }} />
+              <button
+                onClick={onDismiss}
+                className="flex-1 py-3.5 text-center text-[15px] transition-opacity hover:opacity-80"
+                style={{ color: 'var(--muted)' }}
+              >
+                稍后再说
+              </button>
+            </>
+          )}
         </div>
       </div>
     </div>
@@ -545,7 +559,7 @@ function App() {
       style={{ backgroundColor: 'var(--bg)', color: 'var(--ink)' }}
     >
       {updateInfo?.hasUpdate && (
-        <UpdateBanner
+        <UpdateModal
           latest={updateInfo.latest}
           onDismiss={() => setUpdateInfo(null)}
         />

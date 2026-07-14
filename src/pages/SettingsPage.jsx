@@ -15,6 +15,89 @@ import { recordBackupDate } from '../utils/reminder'
 import { saveOrShareFile } from '../utils/fileHelper'
 import { CURRENT_VERSION, forceCheckUpdate } from '../utils/updateChecker'
 
+function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
+  if (!latest) return null
+  const downloadUrl = latest.assets?.find(a => a.name.endsWith('.apk'))?.url
+    || latest.assets?.find(a => a.name.endsWith('.exe'))?.url
+    || latest.htmlUrl
+  return (
+    <div
+      className="fixed inset-0 z-50 flex items-center justify-center"
+      style={{ backgroundColor: 'rgba(0,0,0,0.4)', animation: 'fade-in 0.2s ease-out' }}
+      onClick={onDismiss}
+    >
+      <div
+        className="w-full max-w-sm mx-4 overflow-hidden animate-slide-up"
+        style={{ backgroundColor: 'var(--bg)', borderRadius: '16px' }}
+        onClick={(e) => e.stopPropagation()}
+      >
+        <div className="px-5 pt-5 pb-4 text-center">
+          <div
+            className="w-14 h-14 rounded-full mx-auto mb-3 flex items-center justify-center"
+            style={{ backgroundColor: hasUpdate ? '#E8F4FD' : '#E8F8E8' }}
+          >
+            <Icon name={hasUpdate ? 'refresh' : 'check'} size={24} color={hasUpdate ? '#5DADE2' : '#4CAF50'} strokeWidth={2} />
+          </div>
+          <h3 className="text-[16px] font-semibold mb-1" style={{ color: 'var(--ink)' }}>
+            {hasUpdate ? '发现新版本' : '已是最新版本'}
+          </h3>
+          <p className="text-[13px] mb-1" style={{ color: 'var(--ink2)' }}>
+            {latest.name || `v${CURRENT_VERSION}`}
+          </p>
+          <p className="text-[12px] mb-3" style={{ color: 'var(--muted)' }}>
+            当前版本 v{CURRENT_VERSION}
+          </p>
+          {latest.body && (
+            <div
+              className="text-left text-[12px] leading-relaxed max-h-32 overflow-y-auto px-3 py-2.5 rounded-xl"
+              style={{ backgroundColor: 'var(--bg2)', color: 'var(--ink2)' }}
+            >
+              {latest.body.split('\n').filter(l => l.trim()).slice(0, 8).map((line, i) => (
+                <p key={i} className={i === 0 ? 'font-medium mb-1' : 'mb-0.5'} style={{ color: i === 0 ? 'var(--ink)' : undefined }}>
+                  {line.replace(/^#+\s*/, '').replace(/^\*\*.*?\*\*/, m => m.replace(/\*\*/g, ''))}
+                </p>
+              ))}
+            </div>
+          )}
+        </div>
+        <div className="flex border-t" style={{ borderColor: 'var(--rule)' }}>
+          {hasUpdate ? (
+            <a
+              href={downloadUrl}
+              target="_blank"
+              rel="noopener noreferrer"
+              className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
+              style={{ color: '#5DADE2' }}
+            >
+              去更新
+            </a>
+          ) : (
+            <button
+              onClick={onDismiss}
+              className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
+              style={{ color: '#4CAF50' }}
+            >
+              好的
+            </button>
+          )}
+          {hasUpdate && (
+            <>
+              <div className="w-px" style={{ backgroundColor: 'var(--rule)' }} />
+              <button
+                onClick={onDismiss}
+                className="flex-1 py-3.5 text-center text-[15px] transition-opacity hover:opacity-80"
+                style={{ color: 'var(--muted)' }}
+              >
+                稍后再说
+              </button>
+            </>
+          )}
+        </div>
+      </div>
+    </div>
+  )
+}
+
 function SettingsPage() {
   const [showDataModal, setShowDataModal] = useState(false)
   const [showAboutModal, setShowAboutModal] = useState(false)
@@ -22,6 +105,7 @@ function SettingsPage() {
   const [backingUp, setBackingUp] = useState(false)
   const [updateChecking, setUpdateChecking] = useState(false)
   const [updateResult, setUpdateResult] = useState(null) // null | { hasUpdate, latest }
+  const [showUpdateModal, setShowUpdateModal] = useState(false)
   const [showContactModal, setShowContactModal] = useState(false)
 
   const handleBackupNow = async () => {
@@ -41,16 +125,12 @@ function SettingsPage() {
   }
 
   const handleCheckUpdate = async () => {
-    // 如果已经有更新结果，点击直接跳转到更新页面
-    if (updateResult?.hasUpdate) {
-      window.open(updateResult.latest?.htmlUrl, '_blank')
-      return
-    }
     if (updateChecking) return
     setUpdateChecking(true)
     try {
       const result = await forceCheckUpdate()
       setUpdateResult(result)
+      if (result?.latest) setShowUpdateModal(true)
     } catch {
       setUpdateResult(null)
     }
@@ -166,6 +246,15 @@ function SettingsPage() {
       {/* 联系作者弹窗 */}
       {showContactModal && (
         <ContactAuthorModal onClose={() => setShowContactModal(false)} />
+      )}
+
+      {/* 更新弹窗 */}
+      {showUpdateModal && updateResult?.latest && (
+        <UpdateModal
+          latest={updateResult.latest}
+          hasUpdate={updateResult.hasUpdate}
+          onDismiss={() => setShowUpdateModal(false)}
+        />
       )}
     </div>
   )
