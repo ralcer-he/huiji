@@ -37,7 +37,7 @@ function SettingsPage() {
 
   const settingItems = [
     { iconName: 'save', label: '数据管理', desc: '导出/导入/清空', onClick: () => setShowDataModal(true) },
-    { iconName: 'info', label: '关于慧记', desc: 'v1.0.0', onClick: () => setShowAboutModal(true) },
+    { iconName: 'info', label: '关于慧记', desc: 'v1.1', onClick: () => setShowAboutModal(true) },
   ]
 
   return (
@@ -122,7 +122,7 @@ function SettingsPage() {
 
       {/* 底部版本号 */}
       <div className="mt-8 text-center">
-        <p className="text-xs" style={{ color: 'var(--muted)' }}>慧记 v1.0.0</p>
+        <p className="text-xs" style={{ color: 'var(--muted)' }}>慧记 v1.1</p>
       </div>
 
       {/* 数据管理弹窗 */}
