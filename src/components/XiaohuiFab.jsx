@@ -820,6 +820,7 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
   })
   const buttonRef = useRef(null)
   const hasMoved = useRef(false)
+  const touchStartTime = useRef(0)
   const currentPosRef = useRef(position)
   const isDockedRef = useRef(isDocked)
   const lastInteractionRef = useRef(null) // 'touch' or 'mouse'
@@ -847,7 +848,8 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
       lastInteractionRef.current = 'mouse'
     }
 
-    e.preventDefault()
+    // 注意：这里不调用 e.preventDefault()，否则会阻止 click 事件触发
+    // 点击和拖拽的区分通过 hasMoved 在 onEnd 中判断
     if (isDockedRef.current) {
       setIsDocked(false)
       isDockedRef.current = false
@@ -863,6 +865,7 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
     }
     setIsDragging(true)
     hasMoved.current = false
+    touchStartTime.current = Date.now()
     const rect = buttonRef.current.getBoundingClientRect()
     const clientX = e.touches ? e.touches[0].clientX : e.clientX
     const clientY = e.touches ? e.touches[0].clientY : e.clientY
@@ -873,13 +876,17 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
     if (!isDragging) return
 
     const onMove = e => {
-      e.preventDefault()
+      // 只有在真正开始移动后才阻止默认行为（防止页面滚动）
+      if (hasMoved.current) {
+        e.preventDefault()
+      }
       const clientX = e.touches ? e.touches[0].clientX : e.clientX
       const clientY = e.touches ? e.touches[0].clientY : e.clientY
       const newX = Math.max(0, Math.min(clientX - dragStart.x, (window.visualViewport?.width || window.innerWidth) - btnSize))
       const newY = Math.max(0, Math.min(clientY - dragStart.y, (window.visualViewport?.height || window.innerHeight) - btnSize))
-      if (Math.abs(newX - currentPosRef.current.x) > 3 || Math.abs(newY - currentPosRef.current.y) > 3)
+      if (Math.abs(newX - currentPosRef.current.x) > 3 || Math.abs(newY - currentPosRef.current.y) > 3) {
         hasMoved.current = true
+      }
       const newPos = { x: newX, y: newY }
       currentPosRef.current = newPos
       setCurrentPos(newPos)
@@ -896,7 +903,9 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
 
       setIsDragging(false)
 
-      if (!hasMoved.current) {
+      const duration = Date.now() - touchStartTime.current
+      // 短时间（<200ms）内的触摸或移动距离很小，判定为点击
+      if (!hasMoved.current || (isTouch && duration < 200)) {
         onClick()
         return
       }

@@ -210,7 +210,7 @@ export function useEditorRecord({ recordType, editRecord, customDate, onSaved, o
       id: currentRecordId || `${recordType}_${getTimestamp()}`,
       type: recordType,
       content: html,
-      title: title.trim() || text.slice(0, 50),
+      title: title.trim(),
       tags: tagsList,
     }
 
@@ -230,7 +230,7 @@ export function useEditorRecord({ recordType, editRecord, customDate, onSaved, o
     }
 
     return record
-  }, [editor, currentRecordId, recordType, tags, weather, location, activities, customDate])
+  }, [editor, currentRecordId, recordType, title, tags, weather, location, activities, customDate])
 
   const save = useCallback(async () => {
     const record = buildRecord()
@@ -244,16 +244,43 @@ export function useEditorRecord({ recordType, editRecord, customDate, onSaved, o
       triggerEmotionAnalysis(saved)
       if (onSaved) onSaved(saved)
       setTimeout(() => setSaveStatus('idle'), 2000)
+      window.dispatchEvent(new CustomEvent('record-saved', { detail: { record: saved } }))
     } catch (error) {
       console.error('保存失败:', error)
       setSaveStatus('error')
     }
   }, [buildRecord, onSaved])
 
+  // 新建/重置：清空当前内容，重置为新的记录
+  const reset = useCallback(() => {
+    setCurrentRecordId(null)
+    setTitle('')
+    setTags('')
+    setWeather('')
+    setLocation('')
+    setActivities([])
+    if (editor) {
+      editor.commands.setContent(DEFAULT_CONTENT[recordType] || '<p></p>')
+    }
+    setSaveStatus('idle')
+    if (saveTimerRef.current) {
+      clearTimeout(saveTimerRef.current)
+      saveTimerRef.current = null
+    }
+  }, [editor, recordType])
+
   // 始终让 onUpdate 拿到最新的 save
   useEffect(() => {
     saveRef.current = save
   }, [save])
+
+  useEffect(() => {
+    if (!editRecord && !currentRecordId) return
+    if (saveTimerRef.current) clearTimeout(saveTimerRef.current)
+    saveTimerRef.current = setTimeout(() => {
+      saveRef.current()
+    }, SAVE_DEBOUNCE_MS)
+  }, [title, tags, weather, location, activities])
 
   // 图片插入
   const addImage = useCallback(() => {
@@ -395,6 +422,7 @@ export function useEditorRecord({ recordType, editRecord, customDate, onSaved, o
     saveStatus,
     saving: saveStatus === 'saving',
     save,
+    reset,
     getStatusText,
     currentRecordId,
     // 标题

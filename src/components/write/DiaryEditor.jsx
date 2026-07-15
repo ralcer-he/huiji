@@ -33,7 +33,7 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
 
   const {
     editor, effectiveDate, formatDate,
-    saveStatus, saving, save, getStatusText,
+    saveStatus, saving, save, reset, getStatusText,
     title, setTitle,
     tags, setTags, tagsArray, toggleTag, removeTag, recentTags,
     weather, setWeather, location, setLocation, activities, setActivities,
@@ -597,15 +597,25 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
               <span className="huiji-caption-secondary">
                 {getStatusText()}
               </span>
-              <button
-                onClick={save}
-                disabled={saving}
-                className="w-12 h-9 rounded-[6px] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-                style={{ backgroundColor: 'var(--accent)', color: 'white' }}
-                title={saving ? '保存中...' : saveStatus === 'saved' ? '已保存' : '保存'}
-              >
-                <Icon name="save" size={16} color="white" />
-              </button>
+              <div className="flex items-center gap-2">
+                <button
+                  onClick={reset}
+                  className="w-12 h-9 rounded-[6px] transition-colors duration-200 flex items-center justify-center"
+                  style={{ backgroundColor: 'var(--bg2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
+                  title="新建"
+                >
+                  <Icon name="plus" size={16} color="var(--ink)" />
+                </button>
+                <button
+                  onClick={save}
+                  disabled={saving}
+                  className="w-12 h-9 rounded-[6px] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                  style={{ backgroundColor: 'var(--accent)', color: 'white' }}
+                  title={saving ? '保存中...' : saveStatus === 'saved' ? '已保存' : '保存'}
+                >
+                  <Icon name="save" size={16} color="white" />
+                </button>
+              </div>
             </div>
           </div>
         </div>
@@ -964,15 +974,25 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
             <span className="huiji-caption-secondary">
               {getStatusText()}
             </span>
-            <button
-              onClick={save}
-              disabled={saving}
-              className="w-12 h-9 rounded-[6px] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
-              style={{ backgroundColor: 'var(--accent)', color: 'white' }}
-              title={saving ? '保存中...' : saveStatus === 'saved' ? '已保存' : '保存'}
-            >
-              <Icon name="save" size={16} color="white" />
-            </button>
+            <div className="flex items-center gap-2">
+              <button
+                onClick={reset}
+                className="w-12 h-9 rounded-[6px] transition-colors duration-200 flex items-center justify-center"
+                style={{ backgroundColor: 'var(--bg2)', color: 'var(--ink)', border: '1px solid var(--rule)' }}
+                title="新建"
+              >
+                <Icon name="plus" size={16} color="var(--ink)" />
+              </button>
+              <button
+                onClick={save}
+                disabled={saving}
+                className="w-12 h-9 rounded-[6px] transition-colors duration-200 disabled:opacity-50 disabled:cursor-not-allowed flex items-center justify-center"
+                style={{ backgroundColor: 'var(--accent)', color: 'white' }}
+                title={saving ? '保存中...' : saveStatus === 'saved' ? '已保存' : '保存'}
+              >
+                <Icon name="save" size={16} color="white" />
+              </button>
+            </div>
           </div>
         </div>
 

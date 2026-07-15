@@ -1,6 +1,6 @@
 [package]
 name = "huiji"
-version = "1.0.7"
+version = "1.1.1"
 description = "AI情绪感知日记"
 authors = ["ralcer"]
 edition = "2021"

@@ -83,6 +83,14 @@ function TimelinePage() {
   }, [])
 
   useEffect(() => {
+    const handleRecordSaved = () => {
+      loadRecords()
+    }
+    window.addEventListener('record-saved', handleRecordSaved)
+    return () => window.removeEventListener('record-saved', handleRecordSaved)
+  }, [])
+
+  useEffect(() => {
     localStorage.setItem('huiji_timeline_view_mode', viewMode)
   }, [viewMode])
 
