@@ -824,6 +824,7 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
   const currentPosRef = useRef(position)
   const isDockedRef = useRef(isDocked)
   const lastInteractionRef = useRef(null) // 'touch' or 'mouse'
+  const touchEndHandled = useRef(false) // 防止 touchend 后 mouseup 重复触发
 
   const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
   const btnSize = 90
@@ -893,8 +894,22 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
     }
 
     const onEnd = (e) => {
-      // 防止 touchend 后 mouseup 重复触发
       const isTouch = e.type === 'touchend'
+
+      // 防止 touchend 后模拟 mouseup 重复触发
+      // 注意：mousedown 已经把 lastInteractionRef 清为 null，
+      // 所以不能只靠 lastInteractionRef 来判断，需要单独的标志
+      if (!isTouch && touchEndHandled.current) {
+        touchEndHandled.current = false
+        return
+      }
+      if (isTouch) {
+        touchEndHandled.current = true
+        // 安全兜底：500ms 后自动清除，防止 mouseup 未触发时标志残留
+        setTimeout(() => { touchEndHandled.current = false }, 500)
+      }
+
+      // 旧的 lastInteractionRef 检查仍保留，处理 mousedown 阶段的拦截
       if (!isTouch && lastInteractionRef.current === 'touch') {
         lastInteractionRef.current = null
         return
