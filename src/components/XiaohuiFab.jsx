@@ -455,6 +455,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
       ref={chatRef}
       data-overlay="true"
       className="animate-slide-up"
+      onTouchStart={e => e.stopPropagation()}
       style={{
         position: 'fixed',
         zIndex: 50,
@@ -809,7 +810,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
   )
 }
 
-function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
+function FloatingButton({ onClick, aiAvailable, position, onDragEnd, isOpen }) {
   const [isDragging, setIsDragging] = useState(false)
   const [dragStart, setDragStart] = useState({ x: 0, y: 0 })
   const [currentPos, setCurrentPos] = useState(position)
@@ -837,6 +838,9 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
   useEffect(() => { isDockedRef.current = isDocked }, [isDocked])
 
   const handleDragStart = useCallback(e => {
+    // 如果聊天窗口已打开，不处理悬浮窗的触摸/鼠标事件，避免误触关闭
+    if (isOpen) return
+
     // 防止触摸和鼠标事件双重触发：手机上 touchstart 后会再触发 mousedown，跳过后者
     const isTouch = e.type === 'touchstart'
     if (isTouch) {
@@ -871,7 +875,7 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
     const clientX = e.touches ? e.touches[0].clientX : e.clientX
     const clientY = e.touches ? e.touches[0].clientY : e.clientY
     setDragStart({ x: clientX - rect.left, y: clientY - rect.top })
-  }, [onClick, onDragEnd])
+  }, [onClick, onDragEnd, isOpen])
 
   useEffect(() => {
     if (!isDragging) return
@@ -1131,6 +1135,7 @@ export default function XiaohuiFab() {
         aiAvailable={aiAvailable}
         position={fabPosition}
         onDragEnd={handleFabDragEnd}
+        isOpen={open}
       />
       {open && (
         <XiaohuiChat
