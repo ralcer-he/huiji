@@ -300,7 +300,7 @@ export const clearAllData = async () => {
 
 export const cleanupLegacyData = async () => {
   try {
-    const CLEAN_VERSION = 'legacyDataCleaned_v1067';
+    const CLEAN_VERSION = 'legacyDataCleaned_v1068';
     const cleanedMarker = await getSetting(CLEAN_VERSION);
     if (!cleanedMarker) {
       const allConversations = await db.chatConversations.toArray();

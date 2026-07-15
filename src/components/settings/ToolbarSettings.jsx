@@ -47,10 +47,21 @@ function ToolbarSettings() {
   const [calendarMode, setCalendarMode] = useState(DEFAULT_CALENDAR_MODE)
   const [dominantEmotionPeriod, setDominantEmotionPeriod] = useState(DEFAULT_DOMINANT_EMOTION_PERIOD)
   const [shareCardConfig, setShareCardConfig] = useState(DEFAULT_SHARE_CARD_CONFIG)
+  const [fabEnabled, setFabEnabled] = useState(() => {
+    const v = localStorage.getItem('xiaohui_fab_enabled')
+    return v === null ? true : v === 'true'
+  })
 
   useEffect(() => {
     loadSettings()
   }, [])
+
+  const handleToggleFab = () => {
+    const next = !fabEnabled
+    setFabEnabled(next)
+    localStorage.setItem('xiaohui_fab_enabled', String(next))
+    window.dispatchEvent(new CustomEvent('fab-enabled-change', { detail: { enabled: next } }))
+  }
 
   const loadSettings = async () => {
     const version = await getSetting('noteToolbarVersion')
@@ -260,6 +271,25 @@ function ToolbarSettings() {
   return (
     <div>
       <h3 className="text-sm font-medium px-5 pt-5 pb-3" style={{ color: 'var(--ink)' }}>自定义</h3>
+
+      {/* 悬浮窗开关 */}
+      <div className="flex items-center justify-between h-12 px-5 rounded-[8px]">
+        <div className="flex items-center gap-3">
+          <Icon name="circle" size={18} color="var(--muted)" />
+          <span className="text-sm" style={{ color: 'var(--ink)' }}>悬浮窗</span>
+        </div>
+        <button
+          onClick={handleToggleFab}
+          className="relative w-11 h-6 rounded-full transition-colors duration-200"
+          style={{ backgroundColor: fabEnabled ? 'var(--accent)' : 'var(--bg2)' }}
+        >
+          <span
+            className="absolute top-0.5 left-0.5 w-5 h-5 rounded-full bg-white shadow transition-transform duration-200"
+            style={{ transform: fabEnabled ? 'translateX(20px)' : 'translateX(0)' }}
+          />
+        </button>
+      </div>
+
       <Collapsible title="工具栏设置" iconName="sliders" defaultOpen={false} buttonStyle={{ height: '48px' }}>
         <div className="space-y-4">
           <p className="text-xs" style={{ color: 'var(--muted)' }}>

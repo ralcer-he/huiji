@@ -9,6 +9,8 @@ function AvatarCropper({ imageSrc, onConfirm, onCancel, cropSize = 200 }) {
   const [isDragging, setIsDragging] = useState(false)
   const dragStart = useRef({ x: 0, y: 0, posX: 0, posY: 0 })
   const minScale = useRef(1)
+  const lastTouchDistance = useRef(0)
+  const lastTouchCenter = useRef({ x: 0, y: 0 })
 
   const handleImageLoad = useCallback(() => {
     if (!imgRef.current || !containerRef.current) return
@@ -46,6 +48,19 @@ function AvatarCropper({ imageSrc, onConfirm, onCancel, cropSize = 200 }) {
 
   const handleMouseDown = useCallback((e) => {
     e.preventDefault()
+    if (e.touches && e.touches.length === 2) {
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      lastTouchDistance.current = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      )
+      lastTouchCenter.current = {
+        x: (touch1.clientX + touch2.clientX) / 2,
+        y: (touch1.clientY + touch2.clientY) / 2,
+      }
+      return
+    }
     setIsDragging(true)
     const clientX = e.touches ? e.touches[0].clientX : e.clientX
     const clientY = e.touches ? e.touches[0].clientY : e.clientY
@@ -58,6 +73,24 @@ function AvatarCropper({ imageSrc, onConfirm, onCancel, cropSize = 200 }) {
   }, [position])
 
   const handleMouseMove = useCallback((e) => {
+    if (e.touches && e.touches.length === 2) {
+      e.preventDefault()
+      const touch1 = e.touches[0]
+      const touch2 = e.touches[1]
+      const currentDistance = Math.hypot(
+        touch2.clientX - touch1.clientX,
+        touch2.clientY - touch1.clientY
+      )
+      if (lastTouchDistance.current > 0) {
+        const scaleFactor = currentDistance / lastTouchDistance.current
+        setScale(prev => {
+          const next = Math.max(minScale.current, Math.min(prev * scaleFactor, prev * 3))
+          return next
+        })
+      }
+      lastTouchDistance.current = currentDistance
+      return
+    }
     if (!isDragging) return
     e.preventDefault()
     const clientX = e.touches ? e.touches[0].clientX : e.clientX
@@ -72,6 +105,7 @@ function AvatarCropper({ imageSrc, onConfirm, onCancel, cropSize = 200 }) {
 
   const handleMouseUp = useCallback(() => {
     setIsDragging(false)
+    lastTouchDistance.current = 0
   }, [])
 
   useEffect(() => {
@@ -88,6 +122,18 @@ function AvatarCropper({ imageSrc, onConfirm, onCancel, cropSize = 200 }) {
       }
     }
   }, [isDragging, handleMouseMove, handleMouseUp])
+
+  useEffect(() => {
+    const handleTouchMove = (e) => {
+      if (e.touches && e.touches.length === 2) {
+        e.preventDefault()
+      }
+    }
+    window.addEventListener('touchmove', handleTouchMove, { passive: false })
+    return () => {
+      window.removeEventListener('touchmove', handleTouchMove)
+    }
+  }, [])
 
   const handleConfirm = useCallback(() => {
     if (!imgRef.current) return

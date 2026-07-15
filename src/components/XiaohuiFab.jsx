@@ -10,6 +10,7 @@ import {
   getChatMessages,
   addChatMessage,
   deleteChatConversation,
+  getUserProfile,
 } from '../db/database'
 import Icon from './ui/Icon'
 
@@ -25,6 +26,7 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
   const [conversations, setConversations] = useState([])
   const [historyLoading, setHistoryLoading] = useState(false)
   const [pendingAction, setPendingAction] = useState(null)
+  const [userAvatar, setUserAvatar] = useState(null)
 
   const chatRef = useRef(null)
   const messagesEndRef = useRef(null)
@@ -48,10 +50,22 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
       } catch (e) {
         console.error('获取 AI 状态失败:', e)
       }
+      try {
+        const profile = await getUserProfile()
+        if (!cancelled && profile?.avatar) setUserAvatar(profile.avatar)
+      } catch {}
       if (!cancelled) await loadConversations()
     }
     init()
     return () => { cancelled = true }
+  }, [])
+
+  useEffect(() => {
+    const handleAvatarUpdate = (e) => {
+      setUserAvatar(e.detail?.avatar || null)
+    }
+    window.addEventListener('avatar-updated', handleAvatarUpdate)
+    return () => window.removeEventListener('avatar-updated', handleAvatarUpdate)
   }, [])
 
   const loadConversations = async () => {
@@ -648,10 +662,14 @@ function XiaohuiChat({ onClose, chatPosition, setChatPosition }) {
                 )}
                 {msg.isUser && (
                   <div
-                    className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center"
-                    style={{ backgroundColor: '#E0E0E0' }}
+                    className="w-9 h-9 rounded-full flex-shrink-0 flex items-center justify-center overflow-hidden"
+                    style={{ backgroundColor: userAvatar ? 'transparent' : '#E0E0E0' }}
                   >
-                    <Icon name="user" size={18} color="#999" strokeWidth={1.2} />
+                    {userAvatar ? (
+                      <img src={userAvatar} alt="用户头像" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                    ) : (
+                      <Icon name="user" size={18} color="#999" strokeWidth={1.2} />
+                    )}
                   </div>
                 )}
 
@@ -802,6 +820,7 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
   })
   const buttonRef = useRef(null)
   const hasMoved = useRef(false)
+  const touchStartTime = useRef(0)
   const currentPosRef = useRef(position)
   const isDockedRef = useRef(isDocked)
   const lastInteractionRef = useRef(null) // 'touch' or 'mouse'
@@ -829,7 +848,8 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
       lastInteractionRef.current = 'mouse'
     }
 
-    e.preventDefault()
+    // 注意：这里不调用 e.preventDefault()，否则会阻止 click 事件触发
+    // 点击和拖拽的区分通过 hasMoved 在 onEnd 中判断
     if (isDockedRef.current) {
       setIsDocked(false)
       isDockedRef.current = false
@@ -845,6 +865,7 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
     }
     setIsDragging(true)
     hasMoved.current = false
+    touchStartTime.current = Date.now()
     const rect = buttonRef.current.getBoundingClientRect()
     const clientX = e.touches ? e.touches[0].clientX : e.clientX
     const clientY = e.touches ? e.touches[0].clientY : e.clientY
@@ -855,13 +876,17 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
     if (!isDragging) return
 
     const onMove = e => {
-      e.preventDefault()
+      // 只有在真正开始移动后才阻止默认行为（防止页面滚动）
+      if (hasMoved.current) {
+        e.preventDefault()
+      }
       const clientX = e.touches ? e.touches[0].clientX : e.clientX
       const clientY = e.touches ? e.touches[0].clientY : e.clientY
       const newX = Math.max(0, Math.min(clientX - dragStart.x, (window.visualViewport?.width || window.innerWidth) - btnSize))
       const newY = Math.max(0, Math.min(clientY - dragStart.y, (window.visualViewport?.height || window.innerHeight) - btnSize))
-      if (Math.abs(newX - currentPosRef.current.x) > 3 || Math.abs(newY - currentPosRef.current.y) > 3)
+      if (Math.abs(newX - currentPosRef.current.x) > 3 || Math.abs(newY - currentPosRef.current.y) > 3) {
         hasMoved.current = true
+      }
       const newPos = { x: newX, y: newY }
       currentPosRef.current = newPos
       setCurrentPos(newPos)
@@ -878,7 +903,9 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
 
       setIsDragging(false)
 
-      if (!hasMoved.current) {
+      const duration = Date.now() - touchStartTime.current
+      // 短时间（<200ms）内的触摸或移动距离很小，判定为点击
+      if (!hasMoved.current || (isTouch && duration < 200)) {
         onClick()
         return
       }
@@ -976,6 +1003,10 @@ function FloatingButton({ onClick, aiAvailable, position, onDragEnd }) {
 export default function XiaohuiFab() {
   const [open, setOpen] = useState(false)
   const [aiAvailable, setAiAvailable] = useState(true)
+  const [fabEnabled, setFabEnabled] = useState(() => {
+    const v = localStorage.getItem('xiaohui_fab_enabled')
+    return v === null ? true : v === 'true'
+  })
   const [fabPosition, setFabPosition] = useState(() => {
     const isMobile = typeof window !== 'undefined' && window.innerWidth < 768
     const saved = localStorage.getItem(
@@ -1005,6 +1036,16 @@ export default function XiaohuiFab() {
     return { x: Math.max(0, window.innerWidth / 2 - 200), y: 80 }
   })
   const { getAIStatus } = useAI()
+
+  useEffect(() => {
+    const handler = (e) => {
+      const enabled = e.detail?.enabled ?? true
+      setFabEnabled(enabled)
+      if (!enabled) setOpen(false)
+    }
+    window.addEventListener('fab-enabled-change', handler)
+    return () => window.removeEventListener('fab-enabled-change', handler)
+  }, [])
 
   useEffect(() => {
     const checkStatus = async () => {
@@ -1065,6 +1106,8 @@ export default function XiaohuiFab() {
     }
     setOpen(true)
   }
+
+  if (!fabEnabled) return null
 
   return (
     <div className="fab-container">

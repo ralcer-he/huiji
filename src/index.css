@@ -289,6 +289,18 @@ body {
   animation: scale-in 0.3s ease-out;
 }
 
+/* 弹窗弹性弹出 */
+@keyframes modal-pop-in {
+  from {
+    transform: scale(0.9);
+    opacity: 0;
+  }
+  to {
+    transform: scale(1);
+    opacity: 1;
+  }
+}
+
 /* 滑入动画 */
 @keyframes slide-up {
   from {
