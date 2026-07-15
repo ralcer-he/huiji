@@ -174,6 +174,9 @@ export async function generateShareCard(record) {
     ctx.fillText(formatDate(record.createdAt), PADDING + 60, PADDING + 140)
   }
 
+  const contentWidth = CARD_SIZE - PADDING * 2 - 120
+  const centerX = CARD_SIZE / 2
+
   if (record.title) {
     ctx.fillStyle = '#1E293B'
     ctx.font = 'bold 36px system-ui, -apple-system, sans-serif'
@@ -196,9 +199,6 @@ export async function generateShareCard(record) {
     ctx.textAlign = 'center'
     ctx.fillText(typeLabel, CARD_SIZE - PADDING - 60 - 60, PADDING + 90)
   }
-
-  const contentWidth = CARD_SIZE - PADDING * 2 - 120
-  const centerX = CARD_SIZE / 2
 
   if (record.type === 'mood' && record.emotions?.length > 0) {
     ctx.textAlign = 'center'
@@ -266,12 +266,25 @@ export async function generateShareCard(record) {
     const titleHeight = record.title ? 90 : 0
     const headerEnd = PADDING + 140 + titleHeight
     const availableHeight = footerY - headerEnd
+
+    // 日记类型：在内容前绘制天气/地点信息
+    let metaY = headerEnd
+    if (record.type === 'diary' && (record.weather || record.location)) {
+      ctx.fillStyle = '#94A3B8'
+      ctx.font = '24px system-ui, -apple-system, sans-serif'
+      ctx.textAlign = 'center'
+      const metaParts = []
+      if (record.weather) metaParts.push(record.weather)
+      if (record.location) metaParts.push(record.location)
+      ctx.fillText(metaParts.join(' · '), centerX, metaY + 20)
+      metaY += 50
+    }
     
     const images = record.content ? extractImages(record.content) : []
     const loadedImages = images.length > 0 ? await Promise.all(images.map(loadImage)) : []
     const validImages = loadedImages.filter(img => img !== null)
     
-    let currentY = headerEnd
+    let currentY = metaY
     
     if (validImages.length > 0) {
       const maxImageWidth = contentWidth - 80
