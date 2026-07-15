@@ -13,6 +13,12 @@ import IconButton from '../components/ui/IconButton'
 import { generateShareCard, generateDailySummaryCard } from '../utils/shareCard'
 import { saveOrShareDataUrl } from '../utils/fileHelper'
 
+const WEATHER_ICONS = {
+  '晴': 'weather-sun', '多云': 'weather-partly-cloudy', '阴': 'weather-overcast',
+  '小雨': 'weather-rain', '大雨': 'weather-storm', '雪': 'weather-snow',
+  '雾': 'weather-fog', '风': 'weather-wind',
+}
+
 // 关键词高亮函数
 function HighlightedText({ text, highlight }) {
   if (!highlight || !highlight.trim()) {
@@ -843,7 +849,7 @@ function WaterfallCard({ record, onClick, highlight, onTagClick }) {
         <div className="flex items-center justify-center gap-3 mb-6" style={{ borderBottom: '1px solid var(--rule)' }}>
           {record.weather && (
             <span className="flex items-center gap-1 text-xs" style={{ color: 'var(--muted)' }}>
-              <Icon name="weather-sun" size={14} color="var(--muted)" />
+              <Icon name={WEATHER_ICONS[record.weather] || 'weather-sun'} size={14} color="var(--muted)" />
               {record.weather}
             </span>
           )}
@@ -1499,6 +1505,23 @@ function DiaryDetailContent({ record }) {
         >
           {record.title}
         </h2>
+      )}
+      {(record.weather || record.location) && (
+        <div className="flex items-center justify-center gap-3 text-sm" style={{ color: 'var(--muted)' }}>
+          {record.weather && (
+            <span className="flex items-center gap-1">
+              <Icon name={WEATHER_ICONS[record.weather] || 'weather-sun'} size={16} color="var(--muted)" />
+              {record.weather}
+            </span>
+          )}
+          {record.weather && record.location && <span>·</span>}
+          {record.location && (
+            <span className="flex items-center gap-1">
+              <Icon name="location" size={16} color="var(--muted)" />
+              {record.location}
+            </span>
+          )}
+        </div>
       )}
       <div 
         className="diary-content text-xl font-semibold leading-relaxed"
