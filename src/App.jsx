@@ -20,7 +20,7 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 import { Keyboard } from '@capacitor/keyboard'
 import XiaohuiFab from './components/XiaohuiFab'
 import { checkForUpdate, CURRENT_VERSION } from './utils/updateChecker'
-import { getStatusBarHeight } from './utils/device'
+import { getStatusBarHeight, isMobileDevice } from './utils/device'
 
 function DesktopContent() {
   const location = useLocation()
@@ -259,9 +259,12 @@ function MobileDatePicker() {
 
 function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
   if (!latest) return null
-  const downloadUrl = latest.assets?.find(a => a.name.endsWith('.apk'))?.url
-    || latest.assets?.find(a => a.name.endsWith('.exe'))?.url
-    || latest.htmlUrl
+  // 手机端下载 APK，桌面端下载 EXE，均使用直链
+  const isMobile = isMobileDevice()
+  const asset = isMobile
+    ? latest.assets?.find(a => a.name.endsWith('.apk'))
+    : latest.assets?.find(a => a.name.endsWith('.exe'))
+  const downloadUrl = asset?.url || latest.htmlUrl
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
