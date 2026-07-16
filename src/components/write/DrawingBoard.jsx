@@ -1019,7 +1019,10 @@ export default function DrawingBoard({ onSave, onCancel, initialImage, initialDr
       {/* 头部 */}
       <div
         className="flex items-center justify-between px-4 py-3 border-b"
-        style={{ borderColor: 'var(--rule)' }}
+        style={{
+          borderColor: 'var(--rule)',
+          paddingTop: 'calc(12px + var(--safe-area-top, 0px))',
+        }}
       >
         <button
           onClick={onCancel}
