@@ -631,7 +631,18 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
         </div>
 
         {/* 编辑器卡片 */}
-        <div className="huiji-card relative overflow-hidden" style={isKeyboardVisible ? { paddingBottom: '50px' } : {}}>
+        <div
+          className="huiji-card relative overflow-hidden"
+          style={
+            isKeyboardVisible
+              ? {
+                  paddingBottom: '50px',
+                  maxHeight: `calc(100vh - var(--safe-area-top, 0px) - 44px - 220px - ${keyboardHeight}px - 40px)`,
+                  overflowY: 'auto',
+                }
+              : {}
+          }
+        >
           {/* 天气地点栏 */}
           {type === 'diary' && (
             <div className="px-4 pt-3 pb-2 border-b" style={{ borderColor: 'var(--rule)' }}>
@@ -999,10 +1010,11 @@ function DiaryEditor({ customDate, setCustomDate, editRecord, onSaved, type = 'd
         {/* 移动端键盘弹出时的底部工具栏 */}
         {isKeyboardVisible && (
           <div
-            className="fixed left-0 right-0 bottom-0 z-40 flex items-center gap-0.5 px-2 h-10 border-t overflow-x-auto"
+            className="fixed left-0 right-0 z-40 flex items-center gap-0.5 px-2 h-10 border-t overflow-x-auto"
             style={{
               backgroundColor: 'var(--bg)',
               borderColor: 'var(--rule)',
+              bottom: `${keyboardHeight}px`,
             }}
           >
           {renderToolbarButtons()?.left}

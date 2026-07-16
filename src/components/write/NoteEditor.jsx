@@ -225,7 +225,18 @@ function NoteEditor({ customDate, setCustomDate, editRecord, onSaved }) {
         />
       </div>
 
-      <div className="huiji-card relative overflow-hidden" style={isMobile && isKeyboardVisible ? { paddingBottom: '50px' } : {}}>
+      <div
+        className="huiji-card relative overflow-hidden"
+        style={
+          isMobile && isKeyboardVisible
+            ? {
+                paddingBottom: '50px',
+                maxHeight: `calc(100vh - var(--safe-area-top, 0px) - 44px - 160px - ${keyboardHeight}px - 40px)`,
+                overflowY: 'auto',
+              }
+            : {}
+        }
+      >
         {(!isMobile || !isKeyboardVisible) && (
           <div
             className="flex items-center gap-0.5 px-2 h-10 border-b overflow-x-auto"
@@ -410,10 +421,11 @@ function NoteEditor({ customDate, setCustomDate, editRecord, onSaved }) {
       {/* 移动端键盘弹出时的底部工具栏 */}
       {isMobile && isKeyboardVisible && (
         <div
-          className="fixed left-0 right-0 bottom-0 z-40 flex items-center gap-0.5 px-2 h-10 border-t overflow-x-auto"
+          className="fixed left-0 right-0 z-40 flex items-center gap-0.5 px-2 h-10 border-t overflow-x-auto"
           style={{
             backgroundColor: 'var(--bg)',
             borderColor: 'var(--rule)',
+            bottom: `${keyboardHeight}px`,
           }}
         >
           {renderToolbarButtons()?.left}
