@@ -1,4 +1,5 @@
 import { useState, useEffect } from 'react'
+import { Capacitor } from '@capacitor/core'
 import {
   getReminderSettings,
   setReminderSettings,
@@ -27,7 +28,19 @@ function ReminderSettingsPanel({ lastBackupDate, onLastBackupDateChange, onBacku
     checkNotificationPermission()
   }, [])
 
-  const checkNotificationPermission = () => {
+  const checkNotificationPermission = async () => {
+    // Capacitor 原生环境：检查 LocalNotifications 权限
+    if (Capacitor.isNativePlatform()) {
+      try {
+        const { LocalNotifications } = await import('@capacitor/local-notifications')
+        const perm = await LocalNotifications.checkPermissions()
+        setNotificationPermission(perm.display === 'granted' ? 'granted' : 'default')
+      } catch {
+        setNotificationPermission('default')
+      }
+      return
+    }
+    // Web 环境
     if ('Notification' in window) {
       setNotificationPermission(Notification.permission)
     }
@@ -75,6 +88,21 @@ function ReminderSettingsPanel({ lastBackupDate, onLastBackupDateChange, onBacku
   }
 
   const handleTestReminder = async () => {
+    // Capacitor 原生环境：直接通过 LocalNotifications 发送
+    if (Capacitor.isNativePlatform()) {
+      const hasPermission = await requestNotificationPermission()
+      if (!hasPermission) {
+        setTestNotifStatus('error')
+        alert('需要通知权限才能发送提醒，请在系统设置中允许慧记通知')
+        return
+      }
+      showNotification('慧记提醒测试', reminderMessage)
+      setTestNotifStatus('success')
+      setTimeout(() => setTestNotifStatus(''), 3000)
+      return
+    }
+
+    // Web 环境
     if (!('Notification' in window)) {
       setTestNotifStatus('error')
       alert('您的浏览器不支持通知功能')
