@@ -637,6 +637,12 @@ html {
   margin: 0.5em 0;
 }
 
+.detail-content-container .diary-content img {
+  display: block;
+  margin-left: auto;
+  margin-right: auto;
+}
+
 @media (min-width: 768px) {
   .timeline-card .diary-content img {
     max-width: 35%;

@@ -1382,7 +1382,18 @@ function RecordDetailModal({ record, onClose, onDelete }) {
 }
 
 function NoteDetailContent({ record }) {
-  const htmlContent = record.contentHTML || record.content || ''
+  let htmlContent = record.contentHTML || record.content || ''
+  
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(htmlContent, 'text/html')
+  const images = doc.querySelectorAll('img')
+  if (images.length > 2) {
+    for (let i = 2; i < images.length; i++) {
+      images[i].remove()
+    }
+  }
+  htmlContent = doc.body.innerHTML
+
   return (
     <div className="w-full text-center space-y-6">
       {record.title && (
@@ -1491,11 +1502,21 @@ function MemoDetailContent({ record }) {
 }
 
 function DiaryDetailContent({ record }) {
-  const htmlContent = record.contentHTML || record.content || ''
+  let htmlContent = record.contentHTML || record.content || ''
+  
+  const parser = new DOMParser()
+  const doc = parser.parseFromString(htmlContent, 'text/html')
+  const images = doc.querySelectorAll('img')
+  if (images.length > 2) {
+    for (let i = 2; i < images.length; i++) {
+      images[i].remove()
+    }
+  }
+  htmlContent = doc.body.innerHTML
 
   return (
     <div 
-      className="prose prose-base max-w-none w-full space-y-6"
+      className="prose prose-base max-w-none w-full space-y-6 text-center"
       style={{ color: 'var(--ink-strong)' }}
     >
       {record.title && (
@@ -1524,7 +1545,7 @@ function DiaryDetailContent({ record }) {
         </div>
       )}
       <div 
-        className="diary-content text-xl font-semibold leading-relaxed"
+        className="diary-content text-xl font-semibold leading-relaxed text-center"
         dangerouslySetInnerHTML={{ __html: htmlContent }}
       />
     </div>
