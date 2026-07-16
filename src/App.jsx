@@ -20,6 +20,7 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 import { Keyboard } from '@capacitor/keyboard'
 import XiaohuiFab from './components/XiaohuiFab'
 import { checkForUpdate, CURRENT_VERSION } from './utils/updateChecker'
+import { getSafeAreaTop } from './utils/device'
 
 function DesktopContent() {
   const location = useLocation()
@@ -150,7 +151,7 @@ function MobileDatePicker() {
         <Icon name={showPicker ? 'chevron-up' : 'chevron-down'} size={14} color="var(--header-text)" strokeWidth={2} />
       </button>
       {showPicker && (
-        <div className="fixed top-[44px] left-0 right-0 z-50 shadow-lg animate-fade-in overflow-y-auto" style={{ backgroundColor: 'var(--header-bg)', maxHeight: '85vh' }}>
+        <div className="fixed left-0 right-0 z-50 shadow-lg animate-fade-in overflow-y-auto" style={{ backgroundColor: 'var(--header-bg)', maxHeight: '85vh', top: 'calc(44px + var(--safe-area-top, 0px))' }}>
           {/* 标题栏：左箭头 + 中年月 + 右(今日+年视图+右箭头) */}
           <div className="flex items-center justify-between px-2 pt-3 pb-2 relative">
             <button onClick={() => setViewDate(new Date(year, month - 1, 1))} className="w-10 h-10 flex items-center justify-center rounded-full hover:bg-white/10">
@@ -345,6 +346,7 @@ function App() {
   const [checkingPIN, setCheckingPIN] = useState(true)
   const [sidebarOpen, setSidebarOpen] = useState(false)
   const [updateInfo, setUpdateInfo] = useState(null) // { hasUpdate, latest }
+  const [safeAreaTop, setSafeAreaTop] = useState(0)
   const location = useLocation()
   const navigate = useNavigate()
   const lastBackPressRef = useRef(0)
@@ -386,8 +388,12 @@ function App() {
     if (!Capacitor.isNativePlatform()) return
     StatusBar.setStyle({ style: Style.Light }).catch(() => {})
     StatusBar.setBackgroundColor({ color: '#7EC8E3' }).catch(() => {})
-    // 状态栏不覆盖 WebView，避免遮挡顶部内容
-    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
+    // 让 WebView 延伸至状态栏下方，并通过安全区域变量预留顶部间距，
+    // 避免部分机型（尤其是 Android 15+）状态栏仍覆盖顶部导航栏导致无法点击
+    StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
+    const top = getSafeAreaTop()
+    setSafeAreaTop(top)
+    document.documentElement.style.setProperty('--safe-area-top', `${top}px`)
     // Capacitor 原生环境中禁用 Service Worker，避免 Workbox 缓存策略干扰网络请求
     navigator.serviceWorker?.getRegistrations().then(regs =>
       regs.forEach(r => r.unregister())
@@ -530,8 +536,8 @@ function App() {
         <div className="hidden md:flex lg:hidden">
           <Sidebar />
         </div>
-        <header className="md:hidden sticky top-0 z-30 flex-shrink-0 w-full flex items-center overflow-hidden" style={{ backgroundColor: 'var(--header-bg)', height: '44px' }}>
-          <div className="h-full flex items-center" style={{ paddingLeft: '20px' }}>
+        <header className="md:hidden sticky top-0 z-30 flex-shrink-0 w-full flex items-center overflow-hidden" style={{ backgroundColor: 'var(--header-bg)', minHeight: '44px', paddingTop: 'var(--safe-area-top, 0px)' }}>
+          <div className="h-11 flex items-center" style={{ paddingLeft: '20px' }}>
             <button
               onClick={() => setSidebarOpen(true)}
               className="p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"
@@ -617,8 +623,8 @@ function App() {
 
       {/* 移动端布局 (< md) */}
       <div className="md:hidden flex-1 min-h-0 flex flex-col">
-        <header className="sticky top-0 z-30 flex-shrink-0 w-full flex items-center overflow-hidden" style={{ backgroundColor: 'var(--header-bg)', height: '44px' }}>
-          <div className="h-full flex items-center" style={{ paddingLeft: '20px' }}>
+        <header className="sticky top-0 z-30 flex-shrink-0 w-full flex items-center overflow-hidden" style={{ backgroundColor: 'var(--header-bg)', minHeight: '44px', paddingTop: 'var(--safe-area-top, 0px)' }}>
+          <div className="h-11 flex items-center" style={{ paddingLeft: '20px' }}>
             <button
               onClick={() => setSidebarOpen(true)}
               className="p-2 rounded-lg hover:bg-white/10 transition-colors flex-shrink-0"

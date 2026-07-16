@@ -1,6 +1,6 @@
 import { getSetting, saveSetting } from '../db/database'
 
-const CURRENT_VERSION = '1.1.2'
+const CURRENT_VERSION = '1.1.3'
 const GITHUB_REPO = 'ralcer-he/huiji'
 const CHECK_INTERVAL = 24 * 60 * 60 * 1000 // 24小时检查一次
 

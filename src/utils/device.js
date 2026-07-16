@@ -1,5 +1,16 @@
 import { Capacitor } from '@capacitor/core'
 
+export function getSafeAreaTop() {
+  if (typeof window === 'undefined') return 0
+  if (!Capacitor.isNativePlatform()) return 0
+  try {
+    const insets = Capacitor.getSafeAreaInsets()
+    return insets.top || 0
+  } catch {
+    return 0
+  }
+}
+
 export function isMobileDevice() {
   if (typeof window === 'undefined') return false
 
