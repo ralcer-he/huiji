@@ -6,12 +6,10 @@ function TopBar({ title, showBack = false, rightAction = null }) {
 
   return (
     <div
-      className="sticky top-0 z-30 relative flex items-center justify-between px-5"
+      className="sticky top-0 z-30 relative flex items-center justify-between px-5 h-14"
       style={{
         backgroundColor: 'var(--bg)',
         borderBottom: '1px solid transparent',
-        minHeight: '56px',
-        paddingTop: 'var(--safe-area-top, 0px)',
       }}
     >
       {/* 左侧 */}

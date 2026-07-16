@@ -20,7 +20,7 @@ import { StatusBar, Style } from '@capacitor/status-bar'
 import { Keyboard } from '@capacitor/keyboard'
 import XiaohuiFab from './components/XiaohuiFab'
 import { checkForUpdate, CURRENT_VERSION } from './utils/updateChecker'
-import { getSafeAreaTop } from './utils/device'
+import { getStatusBarHeight } from './utils/device'
 
 function DesktopContent() {
   const location = useLocation()
@@ -383,17 +383,24 @@ function App() {
     checkAndGenerateLetters().catch(() => {})
   }, [])
 
-  // Android 状态栏适配
+  // Android 状态栏适配：overlay 模式 + 真实状态栏高度，确保所有机型都不重叠
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
     StatusBar.setStyle({ style: Style.Light }).catch(() => {})
     StatusBar.setBackgroundColor({ color: '#7EC8E3' }).catch(() => {})
-    // 让 WebView 延伸至状态栏下方，并通过安全区域变量预留顶部间距，
-    // 避免部分机型（尤其是 Android 15+）状态栏仍覆盖顶部导航栏导致无法点击
-    StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
-    const top = getSafeAreaTop()
-    setSafeAreaTop(top)
-    document.documentElement.style.setProperty('--safe-area-top', `${top}px`)
+    // 先设为不覆盖，避免初始瞬间闪烁
+    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
+    // 异步获取真实状态栏高度后再切到 overlay 模式并设置 padding
+    getStatusBarHeight().then(height => {
+      const top = height > 0 ? height : 24
+      setSafeAreaTop(top)
+      document.documentElement.style.setProperty('--safe-area-top', `${top}px`)
+      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
+    }).catch(() => {
+      // 获取失败时用 24dp 兜底，并保持 non-overlay 模式
+      setSafeAreaTop(0)
+      document.documentElement.style.setProperty('--safe-area-top', '0px')
+    })
     // Capacitor 原生环境中禁用 Service Worker，避免 Workbox 缓存策略干扰网络请求
     navigator.serviceWorker?.getRegistrations().then(regs =>
       regs.forEach(r => r.unregister())

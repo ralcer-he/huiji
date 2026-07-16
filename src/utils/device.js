@@ -1,11 +1,12 @@
 import { Capacitor } from '@capacitor/core'
 
-export function getSafeAreaTop() {
+export async function getStatusBarHeight() {
   if (typeof window === 'undefined') return 0
   if (!Capacitor.isNativePlatform()) return 0
   try {
-    const insets = Capacitor.getSafeAreaInsets()
-    return insets.top || 0
+    const { StatusBar } = await import('@capacitor/status-bar')
+    const info = await StatusBar.getInfo()
+    return info.height || 0
   } catch {
     return 0
   }
