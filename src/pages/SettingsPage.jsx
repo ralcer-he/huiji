@@ -14,12 +14,16 @@ import { exportAllData } from '../db/database'
 import { recordBackupDate } from '../utils/reminder'
 import { saveOrShareFile } from '../utils/fileHelper'
 import { CURRENT_VERSION, forceCheckUpdate } from '../utils/updateChecker'
+import { isMobileDevice } from '../utils/device'
 
 function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
   if (!latest) return null
-  const downloadUrl = latest.assets?.find(a => a.name.endsWith('.apk'))?.url
-    || latest.assets?.find(a => a.name.endsWith('.exe'))?.url
-    || latest.htmlUrl
+  // 根据设备类型选择直链：手机端下载 APK，桌面端下载 EXE
+  const isMobile = isMobileDevice()
+  const downloadUrl = (isMobile
+    ? latest.assets?.find(a => a.name.endsWith('.apk'))?.url
+    : latest.assets?.find(a => a.name.endsWith('.exe'))?.url
+  ) || latest.htmlUrl
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -74,7 +78,7 @@ function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
           ) : (
             <>
               <a
-                href="https://github.com/ralcer-he/huiji/releases"
+                href={downloadUrl}
                 target="_blank"
                 rel="noopener noreferrer"
                 className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
