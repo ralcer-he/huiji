@@ -53,7 +53,7 @@ function ToolbarSettings() {
   })
 
   useEffect(() => {
-    loadSettings()
+    loadSettings().catch(e => console.error('加载工具栏设置失败:', e))
   }, [])
 
   const handleToggleFab = () => {
@@ -64,46 +64,50 @@ function ToolbarSettings() {
   }
 
   const loadSettings = async () => {
-    const version = await getSetting('noteToolbarVersion')
-    if (version !== NOTE_TOOLBAR_VERSION) {
-      await saveSetting('noteToolbar', DEFAULT_NOTE_TOOLBAR)
-      await saveSetting('noteToolbarVersion', NOTE_TOOLBAR_VERSION)
-      setNoteToolbar([...DEFAULT_NOTE_TOOLBAR])
-      const diary = await getSetting('diaryToolbar')
-      const mergedDiary = mergeConfig(diary, DEFAULT_DIARY_TOOLBAR)
-      setDiaryToolbar(mergedDiary)
-      if (diary) saveSetting('diaryToolbar', mergedDiary)
-    } else {
-      const diary = await getSetting('diaryToolbar')
-      const note = await getSetting('noteToolbar')
-      const mergedDiary = mergeConfig(diary, DEFAULT_DIARY_TOOLBAR)
-      const mergedNote = mergeConfig(note, DEFAULT_NOTE_TOOLBAR)
-      setDiaryToolbar(mergedDiary)
-      setNoteToolbar(mergedNote)
-    }
-    const savedThresholds = await getSetting('wordCloudThresholds')
-    if (savedThresholds) {
-      setWordCloudThresholds({ ...DEFAULT_WORDCLOUD_THRESHOLDS, ...savedThresholds })
-    }
-    const savedWriteTypes = await getSetting('writePageTypes')
-    if (savedWriteTypes && Array.isArray(savedWriteTypes) && savedWriteTypes.length > 0) {
-      const validIds = RECORD_TYPES.map(t => t.id)
-      const filtered = savedWriteTypes.filter(id => validIds.includes(id))
-      if (filtered.length > 0) {
-        setWritePageTypes(filtered)
+    try {
+      const version = await getSetting('noteToolbarVersion')
+      if (version !== NOTE_TOOLBAR_VERSION) {
+        await saveSetting('noteToolbar', DEFAULT_NOTE_TOOLBAR)
+        await saveSetting('noteToolbarVersion', NOTE_TOOLBAR_VERSION)
+        setNoteToolbar([...DEFAULT_NOTE_TOOLBAR])
+        const diary = await getSetting('diaryToolbar')
+        const mergedDiary = mergeConfig(diary, DEFAULT_DIARY_TOOLBAR)
+        setDiaryToolbar(mergedDiary)
+        if (diary) saveSetting('diaryToolbar', mergedDiary)
+      } else {
+        const diary = await getSetting('diaryToolbar')
+        const note = await getSetting('noteToolbar')
+        const mergedDiary = mergeConfig(diary, DEFAULT_DIARY_TOOLBAR)
+        const mergedNote = mergeConfig(note, DEFAULT_NOTE_TOOLBAR)
+        setDiaryToolbar(mergedDiary)
+        setNoteToolbar(mergedNote)
       }
-    }
-    const savedCalendarMode = await getSetting('calendarMode')
-    if (savedCalendarMode === 'simple' || savedCalendarMode === 'detailed') {
-      setCalendarMode(savedCalendarMode)
-    }
-    const savedDominantPeriod = await getSetting('dominantEmotionPeriod')
-    if (['week', 'month', 'year', 'all'].includes(savedDominantPeriod)) {
-      setDominantEmotionPeriod(savedDominantPeriod)
-    }
-    const savedShareConfig = await getSetting('shareCardConfig')
-    if (savedShareConfig) {
-      setShareCardConfig({ ...DEFAULT_SHARE_CARD_CONFIG, ...savedShareConfig })
+      const savedThresholds = await getSetting('wordCloudThresholds')
+      if (savedThresholds) {
+        setWordCloudThresholds({ ...DEFAULT_WORDCLOUD_THRESHOLDS, ...savedThresholds })
+      }
+      const savedWriteTypes = await getSetting('writePageTypes')
+      if (savedWriteTypes && Array.isArray(savedWriteTypes) && savedWriteTypes.length > 0) {
+        const validIds = RECORD_TYPES.map(t => t.id)
+        const filtered = savedWriteTypes.filter(id => validIds.includes(id))
+        if (filtered.length > 0) {
+          setWritePageTypes(filtered)
+        }
+      }
+      const savedCalendarMode = await getSetting('calendarMode')
+      if (savedCalendarMode === 'simple' || savedCalendarMode === 'detailed') {
+        setCalendarMode(savedCalendarMode)
+      }
+      const savedDominantPeriod = await getSetting('dominantEmotionPeriod')
+      if (['week', 'month', 'year', 'all'].includes(savedDominantPeriod)) {
+        setDominantEmotionPeriod(savedDominantPeriod)
+      }
+      const savedShareConfig = await getSetting('shareCardConfig')
+      if (savedShareConfig) {
+        setShareCardConfig({ ...DEFAULT_SHARE_CARD_CONFIG, ...savedShareConfig })
+      }
+    } catch (e) {
+      console.error('加载工具栏设置失败:', e)
     }
   }
 

@@ -21,6 +21,9 @@ function ProfileSettingsPanel() {
       setHobbies(profile.hobbies || '')
       setBio(profile.bio || '')
       setLoaded(true)
+    }).catch(e => {
+      console.error('加载个人资料失败:', e)
+      setLoaded(true)
     })
   }, [])
 

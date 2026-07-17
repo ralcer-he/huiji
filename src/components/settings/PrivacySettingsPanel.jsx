@@ -10,14 +10,18 @@ function PrivacySettingsPanel() {
   const [showPINModal, setShowPINModal] = useState(false)
 
   useEffect(() => {
-    loadPINSettings()
+    loadPINSettings().catch(e => console.error('加载PIN设置失败:', e))
   }, [])
 
   const loadPINSettings = async () => {
-    const enabled = await getSetting('pinEnabled')
-    setPinEnabled(!!enabled)
-    const timeout = await getSetting('pinTimeout')
-    setPinTimeout(timeout || 0)
+    try {
+      const enabled = await getSetting('pinEnabled')
+      setPinEnabled(!!enabled)
+      const timeout = await getSetting('pinTimeout')
+      setPinTimeout(timeout || 0)
+    } catch (e) {
+      console.error('加载PIN设置失败:', e)
+    }
   }
 
   const handlePINSetup = async (pinHash) => {

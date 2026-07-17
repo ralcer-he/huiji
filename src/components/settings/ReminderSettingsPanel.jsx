@@ -23,39 +23,49 @@ function ReminderSettingsPanel({ lastBackupDate, onLastBackupDateChange, onBacku
   const [backupReminderEnabled, setBackupReminderEnabled] = useState(false)
 
   useEffect(() => {
-    loadReminderSettings()
-    loadBackupReminderSettings()
-    checkNotificationPermission()
+    loadReminderSettings().catch(e => console.error('加载提醒设置失败:', e))
+    loadBackupReminderSettings().catch(e => console.error('加载备份提醒设置失败:', e))
+    checkNotificationPermission().catch(e => console.error('检查通知权限失败:', e))
   }, [])
 
   const checkNotificationPermission = async () => {
-    // Capacitor 原生环境：检查 LocalNotifications 权限
-    if (Capacitor.isNativePlatform()) {
-      try {
-        const { LocalNotifications } = await import('@capacitor/local-notifications')
-        const perm = await LocalNotifications.checkPermissions()
-        setNotificationPermission(perm.display === 'granted' ? 'granted' : 'default')
-      } catch {
-        setNotificationPermission('default')
+    try {
+      if (Capacitor.isNativePlatform()) {
+        try {
+          const { LocalNotifications } = await import('@capacitor/local-notifications')
+          const perm = await LocalNotifications.checkPermissions()
+          setNotificationPermission(perm.display === 'granted' ? 'granted' : 'default')
+        } catch {
+          setNotificationPermission('default')
+        }
+        return
       }
-      return
-    }
-    // Web 环境
-    if ('Notification' in window) {
-      setNotificationPermission(Notification.permission)
+      if ('Notification' in window) {
+        setNotificationPermission(Notification.permission)
+      }
+    } catch (e) {
+      console.error('检查通知权限失败:', e)
     }
   }
 
   const loadReminderSettings = async () => {
-    const settings = await getReminderSettings()
-    setReminderEnabled(settings.enabled)
-    setReminderTime(settings.time)
-    setReminderMessage(settings.message)
+    try {
+      const settings = await getReminderSettings()
+      setReminderEnabled(settings.enabled)
+      setReminderTime(settings.time)
+      setReminderMessage(settings.message)
+    } catch (e) {
+      console.error('加载提醒设置失败:', e)
+    }
   }
 
   const loadBackupReminderSettings = async () => {
-    const settings = await getBackupReminderSettings()
-    setBackupReminderEnabled(settings.enabled)
+    try {
+      const settings = await getBackupReminderSettings()
+      setBackupReminderEnabled(settings.enabled)
+    } catch (e) {
+      console.error('加载备份提醒设置失败:', e)
+    }
   }
 
   const handleToggleReminder = async (enabled) => {

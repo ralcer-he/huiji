@@ -24,33 +24,37 @@ function XiaohuiSettingsPanel() {
   const [letterDelayMode, setLetterDelayMode] = useState('immersive')
 
   useEffect(() => {
-    loadSettings()
+    loadSettings().catch(e => console.error('加载小慧设置失败:', e))
   }, [])
 
   const loadSettings = async () => {
-    const ltm = await getSetting('xiaohui_longTermMemory')
-    const scope = await getSetting('xiaohui_memoryScope')
-    const autoRetrieve = await getSetting('xiaohui_autoRetrieveRecords')
-    const emotionContext = await getSetting('xiaohui_useEmotionContext')
-    const profileContext = await getSetting('xiaohui_useProfileContext')
-    const historyCount = await getSetting('xiaohui_chatHistoryCount')
-    const temp = await getSetting('xiaohui_temperature')
-    const maxT = await getSetting('xiaohui_maxTokens')
-    const autoSave = await getSetting('xiaohui_autoSaveChat')
-    const stream = await getSetting('xiaohui_streamResponse')
-    const delayMode = await getSetting('letterDelayMode')
-    
-    if (ltm !== undefined) setLongTermMemory(ltm)
-    if (scope) setMemoryScope(scope)
-    if (autoRetrieve !== undefined) setAutoRetrieveRecords(autoRetrieve)
-    if (emotionContext !== undefined) setUseEmotionContext(emotionContext)
-    if (profileContext !== undefined) setUseProfileContext(profileContext)
-    if (historyCount) setChatHistoryCount(historyCount)
-    if (temp !== undefined) setTemperature(temp)
-    if (maxT) setMaxTokens(maxT)
-    if (autoSave !== undefined) setAutoSaveChat(autoSave)
-    if (stream !== undefined) setStreamResponse(stream)
-    if (delayMode) setLetterDelayMode(delayMode)
+    try {
+      const ltm = await getSetting('xiaohui_longTermMemory')
+      const scope = await getSetting('xiaohui_memoryScope')
+      const autoRetrieve = await getSetting('xiaohui_autoRetrieveRecords')
+      const emotionContext = await getSetting('xiaohui_useEmotionContext')
+      const profileContext = await getSetting('xiaohui_useProfileContext')
+      const historyCount = await getSetting('xiaohui_chatHistoryCount')
+      const temp = await getSetting('xiaohui_temperature')
+      const maxT = await getSetting('xiaohui_maxTokens')
+      const autoSave = await getSetting('xiaohui_autoSaveChat')
+      const stream = await getSetting('xiaohui_streamResponse')
+      const delayMode = await getSetting('letterDelayMode')
+      
+      if (ltm !== undefined) setLongTermMemory(ltm)
+      if (scope) setMemoryScope(scope)
+      if (autoRetrieve !== undefined) setAutoRetrieveRecords(autoRetrieve)
+      if (emotionContext !== undefined) setUseEmotionContext(emotionContext)
+      if (profileContext !== undefined) setUseProfileContext(profileContext)
+      if (historyCount) setChatHistoryCount(historyCount)
+      if (temp !== undefined) setTemperature(temp)
+      if (maxT) setMaxTokens(maxT)
+      if (autoSave !== undefined) setAutoSaveChat(autoSave)
+      if (stream !== undefined) setStreamResponse(stream)
+      if (delayMode) setLetterDelayMode(delayMode)
+    } catch (e) {
+      console.error('加载小慧设置失败:', e)
+    }
   }
 
   return (

@@ -36,32 +36,38 @@ function AISettingsPanel() {
   const [useBuiltinFree, setUseBuiltinFree] = useState(true)
 
   useEffect(() => {
-    loadAISettings()
+    loadAISettings().catch(e => console.error('加载AI设置失败:', e))
   }, [])
 
   const loadAISettings = async () => {
-    const provider = await getSetting('aiProvider')
-    const apiKey = await getSetting('aiApiKey')
-    const baseUrl = await getSetting('aiBaseUrl')
-    const model = await getSetting('aiModel')
-    const enabled = await getSetting('aiEnabled')
-    const savedModels = await getSetting('aiModels')
-    const builtinFree = await getSetting('useBuiltinFree')
-    if (provider) setAiProvider(provider)
-    if (apiKey) setAiApiKey(apiKey)
-    if (baseUrl) setAiBaseUrl(baseUrl)
-    if (model) setAiModel(model)
-    if (enabled !== undefined) setAiEnabled(enabled)
-    if (savedModels) setAvailableModels(savedModels)
-    if (builtinFree !== undefined) setUseBuiltinFree(!!builtinFree)
+    try {
+      const provider = await getSetting('aiProvider')
+      const apiKey = await getSetting('aiApiKey')
+      const baseUrl = await getSetting('aiBaseUrl')
+      const model = await getSetting('aiModel')
+      const enabled = await getSetting('aiEnabled')
+      const savedModels = await getSetting('aiModels')
+      const builtinFree = await getSetting('useBuiltinFree')
+      if (provider) setAiProvider(provider)
+      if (apiKey) setAiApiKey(apiKey)
+      if (baseUrl) setAiBaseUrl(baseUrl)
+      if (model) setAiModel(model)
+      if (enabled !== undefined) setAiEnabled(enabled)
+      if (savedModels) setAvailableModels(savedModels)
+      if (builtinFree !== undefined) setUseBuiltinFree(!!builtinFree)
 
-    const keys = {}
-    for (const key of Object.keys(AI_PROVIDERS)) {
-      const savedKey = await getSetting(`aiApiKey_${key}`)
-      if (savedKey) keys[key] = savedKey
+      const keys = {}
+      for (const key of Object.keys(AI_PROVIDERS)) {
+        try {
+          const savedKey = await getSetting(`aiApiKey_${key}`)
+          if (savedKey) keys[key] = savedKey
+        } catch {}
+      }
+      setProviderApiKeys(keys)
+      await refreshAIStatus()
+    } catch (e) {
+      console.error('加载AI设置失败:', e)
     }
-    setProviderApiKeys(keys)
-    refreshAIStatus()
   }
 
   const refreshAIStatus = async () => {
@@ -71,6 +77,7 @@ function AISettingsPanel() {
       setAiStatus({ ...config, ...limitStatus })
     } catch (e) {
       console.error('获取 AI 状态失败:', e)
+      setAiStatus(null)
     }
   }
 
