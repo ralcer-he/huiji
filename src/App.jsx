@@ -355,27 +355,9 @@ function App() {
   const lastBackPressRef = useRef(0)
 
   useEffect(() => {
-    // 启动时清理旧 Service Worker 和缓存，确保加载最新代码
-    ;(async () => {
-      try {
-        let hadSW = false
-        if ('serviceWorker' in navigator) {
-          const regs = await navigator.serviceWorker.getRegistrations()
-          hadSW = regs.length > 0
-          for (const r of regs) await r.unregister()
-        }
-        if ('caches' in window) {
-          const keys = await caches.keys()
-          for (const k of keys) await caches.delete(k)
-        }
-        if (hadSW) window.location.reload()
-      } catch (e) {}
-    })()
-
     checkPINStatus()
     initReminder()
     cleanupLegacyData()
-    // 异步检查更新，不影响启动速度
     checkForUpdate().then(result => {
       if (result?.hasUpdate) setUpdateInfo(result)
     }).catch(() => {})
@@ -386,28 +368,30 @@ function App() {
     checkAndGenerateLetters().catch(() => {})
   }, [])
 
-  // Android 状态栏适配：overlay 模式 + 真实状态栏高度，确保所有机型都不重叠
   useEffect(() => {
     if (!Capacitor.isNativePlatform()) return
-    StatusBar.setStyle({ style: Style.Light }).catch(() => {})
-    StatusBar.setBackgroundColor({ color: '#7EC8E3' }).catch(() => {})
-    // 先设为不覆盖，避免初始瞬间闪烁
-    StatusBar.setOverlaysWebView({ overlay: false }).catch(() => {})
-    // 异步获取真实状态栏高度后再切到 overlay 模式并设置 padding
-    getStatusBarHeight().then(height => {
-      const top = height > 0 ? height : 24
-      setSafeAreaTop(top)
-      document.documentElement.style.setProperty('--safe-area-top', `${top}px`)
-      StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
-    }).catch(() => {
-      // 获取失败时用 24dp 兜底，并保持 non-overlay 模式
-      setSafeAreaTop(0)
-      document.documentElement.style.setProperty('--safe-area-top', '0px')
-    })
-    // Capacitor 原生环境中禁用 Service Worker，避免 Workbox 缓存策略干扰网络请求
     navigator.serviceWorker?.getRegistrations().then(regs =>
       regs.forEach(r => r.unregister())
     ).catch(() => {})
+  }, [])
+
+  useEffect(() => {
+    if (!Capacitor.isNativePlatform()) return
+    const initStatusBar = async () => {
+      await StatusBar.setStyle({ style: Style.Light }).catch(() => {})
+      await StatusBar.setBackgroundColor({ color: '#7EC8E3' }).catch(() => {})
+      try {
+        const height = await getStatusBarHeight()
+        const top = height > 0 ? height : 24
+        setSafeAreaTop(top)
+        document.documentElement.style.setProperty('--safe-area-top', `${top}px`)
+        await StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
+      } catch {
+        document.documentElement.style.setProperty('--safe-area-top', '24px')
+        await StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {})
+      }
+    }
+    initStatusBar()
   }, [])
 
   // 键盘事件：弹出/收起时调整布局
