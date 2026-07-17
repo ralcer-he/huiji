@@ -14,7 +14,7 @@ import { exportAllData } from '../db/database'
 import { recordBackupDate } from '../utils/reminder'
 import { saveOrShareFile } from '../utils/fileHelper'
 import { CURRENT_VERSION, forceCheckUpdate } from '../utils/updateChecker'
-import { isMobileDevice } from '../utils/device'
+import { isMobileDevice, openExternalUrl } from '../utils/device'
 
 function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
   if (!latest) return null
@@ -24,6 +24,9 @@ function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
     ? latest.assets?.find(a => a.name.endsWith('.apk'))?.url
     : latest.assets?.find(a => a.name.endsWith('.exe'))?.url
   ) || latest.htmlUrl
+  const handleDownload = () => {
+    openExternalUrl(downloadUrl)
+  }
   return (
     <div
       className="fixed inset-0 z-50 flex items-center justify-center"
@@ -66,26 +69,22 @@ function UpdateModal({ latest, hasUpdate = true, onDismiss }) {
         </div>
         <div className="flex border-t" style={{ borderColor: 'var(--rule)' }}>
           {hasUpdate ? (
-            <a
-              href={downloadUrl}
-              target="_blank"
-              rel="noopener noreferrer"
+            <button
+              onClick={handleDownload}
               className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
               style={{ color: '#5DADE2' }}
             >
               去更新
-            </a>
+            </button>
           ) : (
             <>
-              <a
-                href={downloadUrl}
-                target="_blank"
-                rel="noopener noreferrer"
+              <button
+                onClick={handleDownload}
                 className="flex-1 py-3.5 text-center text-[15px] font-medium transition-opacity hover:opacity-80"
                 style={{ color: '#5DADE2' }}
               >
                 下载新版本
-              </a>
+              </button>
               <div className="w-px" style={{ backgroundColor: 'var(--rule)' }} />
               <button
                 onClick={onDismiss}

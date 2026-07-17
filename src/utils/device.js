@@ -1,5 +1,25 @@
 import { Capacitor } from '@capacitor/core'
 
+export async function openExternalUrl(url) {
+  if (typeof url !== 'string' || !url) return
+  // Tauri 桌面端：必须使用 shell 插件才能在系统默认浏览器打开外链
+  if (window.__TAURI_INTERNALS__ || window.__TAURI__) {
+    try {
+      const { open } = await import('@tauri-apps/plugin-shell')
+      await open(url)
+      return
+    } catch (e) {
+      console.error('Tauri 打开外链失败:', e)
+    }
+  }
+  // 其他环境：在新窗口打开
+  try {
+    window.open(url, '_blank', 'noopener,noreferrer')
+  } catch (e) {
+    console.error('打开外链失败:', e)
+  }
+}
+
 export async function getStatusBarHeight() {
   if (typeof window === 'undefined') return 0
   if (!Capacitor.isNativePlatform()) return 0
