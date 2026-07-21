@@ -19,7 +19,7 @@ import { App as CapacitorApp } from '@capacitor/app'
 import { StatusBar, Style } from '@capacitor/status-bar'
 import { Keyboard } from '@capacitor/keyboard'
 import XiaohuiFab from './components/XiaohuiFab'
-import { checkForUpdate, CURRENT_VERSION } from './utils/updateChecker'
+import { checkForUpdate, forceCheckUpdate, CURRENT_VERSION } from './utils/updateChecker'
 import { getStatusBarHeight, isMobileDevice } from './utils/device'
 
 function DesktopContent() {
@@ -358,7 +358,7 @@ function App() {
     checkPINStatus()
     initReminder()
     cleanupLegacyData()
-    checkForUpdate().then(result => {
+    forceCheckUpdate().then(result => {
       if (result?.hasUpdate) setUpdateInfo(result)
     }).catch(() => {})
   }, [])
