@@ -145,7 +145,7 @@ function SettingsPage() {
     try {
       const result = await forceCheckUpdate()
       setUpdateResult(result)
-      if (result?.hasUpdate) setShowUpdateModal(true)
+      if (result?.latest) setShowUpdateModal(true)
     } catch {
       setUpdateResult(null)
     }
