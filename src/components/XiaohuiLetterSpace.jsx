@@ -91,7 +91,7 @@ export default function XiaohuiLetterSpace({ onClose }) {
         }
       `}</style>
       {/* 顶部栏 */}
-      <header className="flex items-center px-4 py-3 flex-shrink-0 border-b sticky top-0 z-10" style={{ borderColor: LETTER_LINE, backgroundColor: LETTER_BG }}>
+      <header className="flex items-center px-4 py-3 flex-shrink-0 border-b sticky top-0 z-10" style={{ borderColor: LETTER_LINE, backgroundColor: LETTER_BG, paddingTop: 'calc(12px + var(--safe-area-top, 0px))' }}>
         <button onClick={onClose} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-black/5">
           <Icon name="arrow-left" size={20} color={LETTER_INK} />
         </button>
@@ -305,7 +305,7 @@ function LetterReader({ letter, onBack }) {
 
   return (
     <div className="w-full min-h-screen flex flex-col">
-      <header className="flex items-center px-4 py-3 flex-shrink-0 border-b sticky top-0 z-10" style={{ borderColor: LETTER_LINE, backgroundColor: LETTER_BG }}>
+      <header className="flex items-center px-4 py-3 flex-shrink-0 border-b sticky top-0 z-10" style={{ borderColor: LETTER_LINE, backgroundColor: LETTER_BG, paddingTop: 'calc(12px + var(--safe-area-top, 0px))' }}>
         <button onClick={onBack} className="w-10 h-10 rounded-full flex items-center justify-center hover:bg-black/5">
           <Icon name="arrow-left" size={20} color={LETTER_INK} />
         </button>
